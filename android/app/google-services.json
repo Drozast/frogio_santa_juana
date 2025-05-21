@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "729189223627",
+    "project_id": "frogio-201f9",
+    "storage_bucket": "frogio-201f9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:729189223627:android:89892f692380a1382e9f4e",
+        "android_client_info": {
+          "package_name": "com.example.frogio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_88yvH7X3ETGzyRCZ9jkjtmhw-wIIbnc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:729189223627:android:86b56712a035c4ec2e9f4e",
+        "android_client_info": {
+          "package_name": "com.example.frogio_santa_juana"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_88yvH7X3ETGzyRCZ9jkjtmhw-wIIbnc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
