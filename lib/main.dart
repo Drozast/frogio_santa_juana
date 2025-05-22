@@ -9,6 +9,9 @@ import 'features/auth/presentation/bloc/auth_event.dart';
 import 'features/auth/presentation/pages/splash_screen.dart';
 import 'firebase_options.dart';
 
+// Clave global para navegación
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -38,6 +41,7 @@ class MyApp extends StatelessWidget {
         title: 'FROGIO',
         theme: AppTheme.lightTheme,
         debugShowCheckedModeBanner: false,
+        navigatorKey: navigatorKey,
         home: const SplashScreen(),
       ),
     );

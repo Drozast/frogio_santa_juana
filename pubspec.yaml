@@ -10,11 +10,14 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # Firebase - versiones compatibles
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
-  cloud_firestore: ^4.13.6
-  firebase_storage: ^11.6.0
+  # Firebase - versiones actualizadas y compatibles
+  firebase_core: ^2.27.0
+  firebase_auth: ^4.17.8
+  cloud_firestore: ^4.15.8
+  firebase_storage: ^11.6.9
+  
+  # Dependencia requerida para web
+  js: ^0.6.7
   
   # State Management
   flutter_bloc: ^8.1.3

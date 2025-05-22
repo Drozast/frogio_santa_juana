@@ -37,12 +37,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     
-    final result = await getCurrentUser(NoParams());
-    
-    result.fold(
-      (failure) => emit(Unauthenticated()),
-      (user) => user != null ? emit(Authenticated(user)) : emit(Unauthenticated()),
-    );
+    try {
+      final result = await getCurrentUser(NoParams());
+      
+      result.fold(
+        (failure) => emit(Unauthenticated()),
+        (user) => user != null ? emit(Authenticated(user)) : emit(Unauthenticated()),
+      );
+    } catch (e) {
+      emit(Unauthenticated());
+    }
   }
 
   Future<void> _onSignIn(
@@ -51,17 +55,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     
-    final result = await signInUser(
-      SignInParams(
-        email: event.email,
-        password: event.password,
-      ),
-    );
-    
-    result.fold(
-      (failure) => emit(AuthError(failure.message)),
-      (user) => emit(Authenticated(user)),
-    );
+    try {
+      final result = await signInUser(
+        SignInParams(
+          email: event.email,
+          password: event.password,
+        ),
+      );
+      
+      result.fold(
+        (failure) => emit(AuthError(failure.message)),
+        (user) => emit(Authenticated(user)),
+      );
+    } catch (e) {
+      emit(AuthError('Error inesperado: ${e.toString()}'));
+    }
   }
 
   Future<void> _onSignOut(
@@ -70,12 +78,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     
-    final result = await signOutUser(NoParams());
-    
-    result.fold(
-      (failure) => emit(AuthError(failure.message)),
-      (_) => emit(Unauthenticated()),
-    );
+    try {
+      final result = await signOutUser(NoParams());
+      
+      result.fold(
+        (failure) => emit(AuthError(failure.message)),
+        (_) => emit(Unauthenticated()),
+      );
+    } catch (e) {
+      emit(Unauthenticated()); // Forzar logout incluso si hay error
+    }
   }
 
   Future<void> _onRegister(
@@ -84,18 +96,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     
-    final result = await registerUser(
-      RegisterParams(
-        email: event.email,
-        password: event.password,
-        name: event.name,
-      ),
-    );
-    
-    result.fold(
-      (failure) => emit(AuthError(failure.message)),
-      (user) => emit(Authenticated(user)),
-    );
+    try {
+      final result = await registerUser(
+        RegisterParams(
+          email: event.email,
+          password: event.password,
+          name: event.name,
+        ),
+      );
+      
+      result.fold(
+        (failure) => emit(AuthError(failure.message)),
+        (user) => emit(Authenticated(user)),
+      );
+    } catch (e) {
+      emit(AuthError('Error inesperado: ${e.toString()}'));
+    }
   }
 
   Future<void> _onForgotPassword(
@@ -104,11 +120,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     
-    final result = await forgotPassword(event.email);
-    
-    result.fold(
-      (failure) => emit(AuthError(failure.message)),
-      (_) => emit(PasswordResetSent()),
-    );
+    try {
+      final result = await forgotPassword(event.email);
+      
+      result.fold(
+        (failure) => emit(AuthError(failure.message)),
+        (_) => emit(PasswordResetSent()),
+      );
+    } catch (e) {
+      emit(AuthError('Error inesperado: ${e.toString()}'));
+    }
   }
 }

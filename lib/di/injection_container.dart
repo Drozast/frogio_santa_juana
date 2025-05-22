@@ -15,7 +15,10 @@ import '../features/auth/domain/usecases/get_current_user.dart';
 import '../features/auth/domain/usecases/register_user.dart';
 import '../features/auth/domain/usecases/sign_in_user.dart';
 import '../features/auth/domain/usecases/sign_out_user.dart';
+import '../features/auth/domain/usecases/update_user_profile.dart';
+import '../features/auth/domain/usecases/upload_profile_image.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
+import '../features/auth/presentation/bloc/profile/profile_bloc.dart';
 import '../features/citizen/data/datasources/report_remote_data_source.dart';
 import '../features/citizen/data/datasources/report_remote_data_source_impl.dart';
 import '../features/citizen/data/repositories/report_repository_impl.dart';
@@ -40,12 +43,22 @@ Future<void> init() async {
     ),
   );
 
+  // Profile Bloc
+  sl.registerFactory(
+    () => ProfileBloc(
+      updateUserProfile: sl(),
+      uploadProfileImage: sl(),
+    ),
+  );
+
   // Use cases - Auth
   sl.registerLazySingleton(() => GetCurrentUser(sl()));
   sl.registerLazySingleton(() => SignInUser(sl()));
   sl.registerLazySingleton(() => SignOutUser(sl()));
   sl.registerLazySingleton(() => RegisterUser(sl()));
   sl.registerLazySingleton(() => ForgotPassword(sl()));
+  sl.registerLazySingleton(() => UpdateUserProfile(sl()));
+  sl.registerLazySingleton(() => UploadProfileImage(sl()));
 
   // Repository - Auth
   sl.registerLazySingleton<AuthRepository>(
@@ -57,6 +70,7 @@ Future<void> init() async {
     () => AuthRemoteDataSourceImpl(
       firebaseAuth: sl(),
       firestore: sl(),
+      storage: sl(),
     ),
   );
 

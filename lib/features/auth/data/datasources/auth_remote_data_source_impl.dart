@@ -1,16 +1,23 @@
+// lib/features/auth/data/datasources/auth_remote_data_source_impl.dart
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
+import '../../../../core/utils/image_helper.dart';
 import '../models/user_model.dart';
 import 'auth_remote_data_source.dart';
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth firebaseAuth;
   final FirebaseFirestore firestore;
+  final FirebaseStorage storage;
 
   AuthRemoteDataSourceImpl({
     required this.firebaseAuth,
     required this.firestore,
+    required this.storage,
   });
 
   @override
@@ -48,8 +55,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final userData = {
         'email': email,
         'name': name,
-        'role': 'citizen', // Rol por defecto
-        'createdAt': DateTime.now(),
+        'role': 'citizen',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       };
       
       await firestore.collection('users').doc(result.user!.uid).set(userData);
@@ -60,6 +68,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         name: name,
         role: 'citizen',
         createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
     } on FirebaseAuthException catch (e) {
       throw _handleFirebaseAuthException(e);
@@ -88,6 +97,64 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       await firebaseAuth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
       throw _handleFirebaseAuthException(e);
+    }
+  }
+
+  @override
+  Future<UserModel> updateUserProfile({
+    required String userId,
+    String? name,
+    String? phoneNumber,
+    String? address,
+  }) async {
+    try {
+      final Map<String, dynamic> updateData = {
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      if (name != null) updateData['name'] = name;
+      if (phoneNumber != null) updateData['phoneNumber'] = phoneNumber;
+      if (address != null) updateData['address'] = address;
+
+      await firestore.collection('users').doc(userId).update(updateData);
+      
+      return _getUserData(userId);
+    } catch (e) {
+      throw Exception('Error al actualizar perfil: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<String> uploadProfileImage(String userId, File imageFile) async {
+    try {
+      // Comprimir imagen
+      final compressedImage = await ImageHelper.compressProfileImage(imageFile);
+      
+      // Generar nombre único
+      final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storageRef = storage.ref().child('users/$userId/profile/$fileName');
+      
+      // Subir archivo
+      final uploadTask = await storageRef.putFile(compressedImage);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      
+      return downloadUrl;
+    } catch (e) {
+      throw Exception('Error al subir imagen: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<UserModel> updateProfileImage(String userId, String imageUrl) async {
+    try {
+      await firestore.collection('users').doc(userId).update({
+        'profileImageUrl': imageUrl,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      return _getUserData(userId);
+    } catch (e) {
+      throw Exception('Error al actualizar imagen de perfil: ${e.toString()}');
     }
   }
 
