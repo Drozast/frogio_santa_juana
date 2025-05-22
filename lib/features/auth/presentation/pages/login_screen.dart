@@ -99,8 +99,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Logo municipal
                       Image.asset(
                         'assets/images/muni-vertical.png',
-                        height: 150,
-                        width: 150,
+                        height: 250,
+                        width: 250,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 150,
+                            width: 150,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.location_city,
+                              size: 80,
+                              color: AppTheme.primaryColor,
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 20),
                       // Título

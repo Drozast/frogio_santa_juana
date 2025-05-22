@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../dashboard/presentation/pages/dashboard_screen.dart';
@@ -17,14 +16,34 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
   
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 2),
     );
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeIn,
+    ));
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
+    ));
+    
+    _controller.forward();
   }
 
   @override
@@ -53,33 +72,52 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Animación del logo de la rana
-              Lottie.asset(
-                'assets/animations/frog_splash.json',
-                controller: _controller,
-                height: 200,
-                width: 200,
-                onLoaded: (composition) {
-                  _controller
-                    ..duration = composition.duration
-                    ..forward();
+              // Logo de rana con animación personalizada
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.eco, // Icono de hoja como placeholder de rana
+                          size: 100,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 30),
-              const Text(
-                'FROGIO',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: const Text(
+                  'FROGIO',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Solución Municipal Integral',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: const Text(
+                  'Solución Municipal Integral',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               const SizedBox(height: 50),

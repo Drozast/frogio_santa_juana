@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -67,10 +66,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Animación
-                      Lottie.asset(
-                        'assets/animations/register_animation.json',
+                      // Icono en lugar de animación
+                      Container(
                         height: 150,
+                        child: Icon(
+                          Icons.person_add,
+                          size: 80,
+                          color: AppTheme.primaryColor,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       // Título

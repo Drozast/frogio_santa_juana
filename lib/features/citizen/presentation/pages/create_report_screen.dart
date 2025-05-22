@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:lottie/lottie.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -155,11 +154,18 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Lottie.asset(
-              'assets/animations/success_animation.json',
+            Container(
               width: 150,
               height: 150,
-              repeat: false,
+              decoration: BoxDecoration(
+                color: AppTheme.successColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_circle,
+                size: 80,
+                color: AppTheme.successColor,
+              ),
             ),
             const SizedBox(height: 20),
             const Text(

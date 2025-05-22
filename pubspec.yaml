@@ -29,7 +29,7 @@ dependencies:
   
   # UI
   google_fonts: ^6.1.0
-  lottie: ^3.0.0
+  # lottie: ^3.0.0  # Comentado temporalmente
   flutter_svg: ^2.0.10+1
   cached_network_image: ^3.3.1
   shimmer: ^3.0.0
@@ -63,7 +63,7 @@ flutter:
   
   assets:
     - assets/images/
-    - assets/animations/
+    # - assets/animations/  # Comentado temporalmente
 
   fonts:
     - family: Montserrat

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 
-import '../../../../core/services/session_timeout_service.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../di/injection_container.dart' as di;
+import '../../../core/services/session_timeout_service.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../di/injection_container.dart' as di;
 import '../../../features/auth/domain/entities/user_entity.dart';
 import '../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../features/auth/presentation/bloc/auth_event.dart';
 import '../../../features/auth/presentation/bloc/auth_state.dart';
+import '../../../features/citizen/presentation/pages/create_report_screen.dart';
+import '../../../features/citizen/presentation/pages/my_reports_screen.dart';
 import '../widgets/dashboard_menu_item.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -34,7 +35,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     // Inicializar servicio de timeout de sesión
     final sessionService = di.sl<SessionTimeoutService>();
     sessionService.onSessionTimeout = () {
-      context.read<AuthBloc>().add(SignOutEvent());
+      if (mounted) {
+        context.read<AuthBloc>().add(SignOutEvent());
+      }
     };
     sessionService.startTimer();
   }
@@ -106,69 +109,88 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       ),
     ];
 
-    // Común para todos los roles
-    items.add(const BottomNavigationBarItem(
-      icon: Icon(Icons.person),
-      label: 'Perfil',
-    ));
-
     // Ítems específicos por rol
     switch (role) {
       case 'citizen':
-        items.insert(1, const BottomNavigationBarItem(
+        items.add(const BottomNavigationBarItem(
           icon: Icon(Icons.report),
           label: 'Denuncias',
         ));
-        items.insert(2, const BottomNavigationBarItem(
+        items.add(const BottomNavigationBarItem(
           icon: Icon(Icons.question_answer),
           label: 'Consultas',
         ));
         break;
       case 'inspector':
-        items.insert(1, const BottomNavigationBarItem(
+        items.add(const BottomNavigationBarItem(
           icon: Icon(Icons.assignment),
           label: 'Tareas',
         ));
-        items.insert(2, const BottomNavigationBarItem(
+        items.add(const BottomNavigationBarItem(
           icon: Icon(Icons.gavel),
           label: 'Infracciones',
         ));
-        items.insert(3, const BottomNavigationBarItem(
+        items.add(const BottomNavigationBarItem(
           icon: Icon(Icons.directions_car),
           label: 'Vehículos',
         ));
         break;
       case 'admin':
-        items.insert(1, const BottomNavigationBarItem(
+        items.add(const BottomNavigationBarItem(
           icon: Icon(Icons.insights),
           label: 'Estadísticas',
         ));
-        items.insert(2, const BottomNavigationBarItem(
+        items.add(const BottomNavigationBarItem(
           icon: Icon(Icons.people),
           label: 'Usuarios',
         ));
-        items.insert(3, const BottomNavigationBarItem(
+        items.add(const BottomNavigationBarItem(
           icon: Icon(Icons.settings),
           label: 'Configuración',
         ));
         break;
     }
 
+    // Común para todos los roles
+    items.add(const BottomNavigationBarItem(
+      icon: Icon(Icons.person),
+      label: 'Perfil',
+    ));
+
     return items;
   }
 
   Widget _getPage(int index, UserEntity user) {
-    // Esto cambiaría según el rol del usuario y el índice seleccionado
-    // Por ahora, solo devolvemos un marcador de posición
-    if (index == 0) {
-      return _buildHomeDashboard(user);
-    } else {
-      return Center(
-        child: Text(
-          'Página en desarrollo: $index',
-          style: const TextStyle(fontSize: 20),
-        ),
-      );
+    switch (user.role) {
+      case 'citizen':
+        switch (index) {
+          case 0:
+            return _buildHomeDashboard(user);
+          case 1:
+            return MyReportsScreen(userId: user.id);
+          case 2:
+            return const Center(
+              child: Text(
+                'Consultas - En desarrollo',
+                style: TextStyle(fontSize: 20),
+              ),
+            );
+          case 3:
+            return _buildProfilePage(user);
+          default:
+            return _buildHomeDashboard(user);
+        }
+      default:
+        if (index == 0) {
+          return _buildHomeDashboard(user);
+        } else {
+          return Center(
+            child: Text(
+              'Página en desarrollo: $index',
+              style: const TextStyle(fontSize: 20),
+            ),
+          );
+        }
     }
   }
 
@@ -196,10 +218,18 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       parent: _animationController,
                       curve: Curves.easeOut,
                     )),
-                    child: Lottie.asset(
-                      'assets/animations/welcome_frog.json',
+                    child: Container(
                       width: 100,
                       height: 100,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.eco,
+                        size: 50,
+                        color: AppTheme.primaryColor,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -246,7 +276,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             childAspectRatio: 1.5,
             mainAxisSpacing: 16,
             crossAxisSpacing: 16,
-            children: _getQuickAccessItemsForRole(user.role),
+            children: _getQuickAccessItemsForRole(user),
           ),
           const SizedBox(height: 24),
           // Sección de actividad reciente
@@ -275,10 +305,67 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     );
   }
 
-  List<Widget> _getQuickAccessItemsForRole(String role) {
+  Widget _buildProfilePage(UserEntity user) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Información Personal',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildProfileRow('Nombre', user.name ?? 'No especificado'),
+                  _buildProfileRow('Email', user.email),
+                  _buildProfileRow('Rol', _getRoleDisplayName(user.role)),
+                  _buildProfileRow('ID Usuario', user.id),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(value),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _getQuickAccessItemsForRole(UserEntity user) {
     final List<Widget> items = [];
 
-    switch (role) {
+    switch (user.role) {
       case 'citizen':
         items.addAll([
           DashboardMenuItem(
@@ -286,7 +373,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             icon: Icons.add_circle,
             color: AppTheme.primaryColor,
             onTap: () {
-              // Navegar a la pantalla de crear denuncia
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CreateReportScreen(userId: user.id),
+                ),
+              );
             },
           ),
           DashboardMenuItem(
@@ -294,7 +386,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             icon: Icons.list_alt,
             color: AppTheme.secondaryColor,
             onTap: () {
-              // Navegar a la pantalla de mis denuncias
+              setState(() {
+                _currentIndex = 1;
+              });
             },
           ),
           DashboardMenuItem(
@@ -302,7 +396,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             icon: Icons.question_answer,
             color: AppTheme.darkGreen,
             onTap: () {
-              // Navegar a la pantalla de crear consulta
+              // TODO: Navegar a crear consulta
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Funcionalidad en desarrollo'),
+                ),
+              );
             },
           ),
           DashboardMenuItem(
@@ -310,7 +409,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             icon: Icons.question_mark,
             color: Colors.teal,
             onTap: () {
-              // Navegar a la pantalla de mis consultas
+              setState(() {
+                _currentIndex = 2;
+              });
             },
           ),
         ]);
@@ -372,19 +473,16 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         ]);
         break;
       default:
-        // Ítems predeterminados si no se reconoce el rol
         items.addAll([
           DashboardMenuItem(
             title: 'Perfil',
             icon: Icons.person,
             color: AppTheme.primaryColor,
-            onTap: () {},
-          ),
-          DashboardMenuItem(
-            title: 'Configuración',
-            icon: Icons.settings,
-            color: AppTheme.secondaryColor,
-            onTap: () {},
+            onTap: () {
+              setState(() {
+                _currentIndex = _getNavigationItemsForRole(user.role).length - 1;
+              });
+            },
           ),
         ]);
     }
