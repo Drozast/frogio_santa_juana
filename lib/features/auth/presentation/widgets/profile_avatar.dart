@@ -7,7 +7,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../di/injection_container.dart' as di;
 import '../../domain/entities/user_entity.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
 import '../bloc/profile/profile_bloc.dart';
 import '../bloc/profile/profile_event.dart';
 import '../bloc/profile/profile_state.dart';
@@ -159,11 +163,83 @@ class ProfileAvatar extends StatelessWidget {
   }
 
   Future<void> _uploadImageDirectly(BuildContext context, File imageFile) async {
-    // TODO: Implementar subida directa si es necesario
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Ve a Editar Perfil para cambiar tu foto'),
-      ),
-    );
+    try {
+      // Mostrar loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(width: 16),
+              Text('Subiendo imagen...'),
+            ],
+          ),
+          duration: Duration(seconds: 10),
+        ),
+      );
+
+      // Usar el servicio directamente
+      final authRepo = di.sl<AuthRepository>();
+      
+      // Subir imagen
+      final imageUrlResult = await authRepo.uploadProfileImage(user.id, imageFile);
+      
+      await imageUrlResult.fold(
+        (failure) async {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${failure.message}'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        },
+        (imageUrl) async {
+          // Actualizar perfil con nueva URL
+          final updateResult = await authRepo.updateProfileImage(user.id, imageUrl);
+          
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          
+          updateResult.fold(
+            (failure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: ${failure.message}'),
+                  backgroundColor: AppTheme.errorColor,
+                ),
+              );
+            },
+            (updatedUser) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Imagen actualizada correctamente'),
+                  backgroundColor: AppTheme.successColor,
+                ),
+              );
+              
+              // Actualizar AuthBloc
+              if (context.mounted) {
+                context.read<AuthBloc>().add(CheckAuthStatusEvent());
+              }
+            },
+          );
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error inesperado: ${e.toString()}'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
   }
 }

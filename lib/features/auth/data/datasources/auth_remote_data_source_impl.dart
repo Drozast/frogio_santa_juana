@@ -1,11 +1,13 @@
 // lib/features/auth/data/datasources/auth_remote_data_source_impl.dart
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
-import '../../../../core/utils/image_helper.dart';
+//import '../../../../core/utils/image_helper.dart';
 import '../models/user_model.dart';
 import 'auth_remote_data_source.dart';
 
@@ -127,15 +129,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<String> uploadProfileImage(String userId, File imageFile) async {
     try {
-      // Comprimir imagen
-      final compressedImage = await ImageHelper.compressProfileImage(imageFile);
+      Uint8List imageBytes = await imageFile.readAsBytes();
       
-      // Generar nombre único
+      // Para web, subir imagen sin compresión para evitar errores
+      // La compresión se puede agregar después si es necesaria
+      
       final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final storageRef = storage.ref().child('users/$userId/profile/$fileName');
       
-      // Subir archivo
-      final uploadTask = await storageRef.putFile(compressedImage);
+      final uploadTask = await storageRef.putData(
+        imageBytes,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
       final downloadUrl = await uploadTask.ref.getDownloadURL();
       
       return downloadUrl;

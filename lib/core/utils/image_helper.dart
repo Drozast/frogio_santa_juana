@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path/path.dart' as path;
 
@@ -12,11 +13,19 @@ class ImageHelper {
 
   /// Comprimir imagen para foto de perfil
   static Future<File> compressProfileImage(File file) async {
+    if (kIsWeb) {
+      // En web, retornar el archivo sin comprimir
+      return file;
+    }
     return await _compressImage(file, profileImageQuality, maxWidth: 500, maxHeight: 500);
   }
 
   /// Comprimir imagen para reportes
   static Future<File> compressReportImage(File file) async {
+    if (kIsWeb) {
+      // En web, retornar el archivo sin comprimir
+      return file;
+    }
     return await _compressImage(file, reportImageQuality, maxWidth: 1024, maxHeight: 1024);
   }
 

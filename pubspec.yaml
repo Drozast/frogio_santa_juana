@@ -46,6 +46,9 @@ dependencies:
   timeline_tile: ^2.0.0
   path: ^1.8.3
   
+  # Para compresión en web
+  image: ^4.1.3
+  
   shared_preferences: ^2.2.2
   
   # Offline
