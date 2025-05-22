@@ -1,3 +1,4 @@
+// lib/features/citizen/domain/entities/report_entity.dart
 import 'package:equatable/equatable.dart';
 
 class ReportEntity extends Equatable {

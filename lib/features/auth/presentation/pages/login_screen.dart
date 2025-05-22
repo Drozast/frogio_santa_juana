@@ -1,10 +1,11 @@
+// lib/features/auth/presentation/pages/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
-import '../../../dashboard/presentation/pages/dashboard_screen.dart';
+import '../../../../dashboard/presentation/pages/dashboard_screen.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -17,28 +18,52 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  late AnimationController _animationController;
+  bool _rememberPassword = false;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+    _loadSavedCredentials();
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('saved_email') ?? '';
+    final savedPassword = prefs.getString('saved_password') ?? '';
+    final rememberPassword = prefs.getBool('remember_password') ?? false;
+
+    if (rememberPassword && savedEmail.isNotEmpty) {
+      _emailController.text = savedEmail;
+      _passwordController.text = savedPassword;
+      setState(() {
+        _rememberPassword = rememberPassword;
+      });
+    }
+  }
+
+  Future<void> _saveCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_rememberPassword) {
+      await prefs.setString('saved_email', _emailController.text.trim());
+      await prefs.setString('saved_password', _passwordController.text);
+      await prefs.setBool('remember_password', true);
+    } else {
+      await prefs.remove('saved_email');
+      await prefs.remove('saved_password');
+      await prefs.setBool('remember_password', false);
+    }
   }
 
   @override
@@ -46,6 +71,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
+          _saveCredentials();
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const DashboardScreen()),
           );
@@ -70,11 +96,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Animación del logo
-                      Lottie.asset(
-                        'assets/animations/frog_login.json',
-                        controller: _animationController,
+                      // Logo municipal
+                      Image.asset(
+                        'assets/images/muni-vertical.png',
                         height: 150,
+                        width: 150,
                       ),
                       const SizedBox(height: 20),
                       // Título
@@ -142,16 +168,28 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         },
                       ),
                       const SizedBox(height: 8),
-                      // Olvidé contraseña
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            // Mostrar diálogo de recuperación de contraseña
-                            _showForgotPasswordDialog();
-                          },
-                          child: const Text('¿Olvidaste tu contraseña?'),
-                        ),
+                      // Recordar contraseña
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _rememberPassword,
+                            activeColor: AppTheme.primaryColor,
+                            onChanged: (value) {
+                              setState(() {
+                                _rememberPassword = value ?? false;
+                              });
+                            },
+                          ),
+                          const Text('Recordar contraseña'),
+                          const Spacer(),
+                          // Olvidé contraseña
+                          TextButton(
+                            onPressed: () {
+                              _showForgotPasswordDialog();
+                            },
+                            child: const Text('¿Olvidaste tu contraseña?'),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 24),
                       // Botón de login
@@ -234,7 +272,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           TextButton(
             onPressed: () {
               if (formKey.currentState!.validate()) {
-                // Implementar lógica de restablecimiento de contraseña
+                // TODO: Implementar lógica de restablecimiento de contraseña
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(

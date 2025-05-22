@@ -5,10 +5,10 @@ import 'package:lottie/lottie.dart';
 import '../../../../core/services/session_timeout_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../di/injection_container.dart' as di;
-import '../../../auth/domain/entities/user_entity.dart';
-import '../../../auth/presentation/bloc/auth_bloc.dart';
-import '../../../auth/presentation/bloc/auth_event.dart';
-import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../features/auth/domain/entities/user_entity.dart';
+import '../../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../../features/auth/presentation/bloc/auth_event.dart';
+import '../../../features/auth/presentation/bloc/auth_state.dart';
 import '../widgets/dashboard_menu_item.dart';
 
 class DashboardScreen extends StatefulWidget {

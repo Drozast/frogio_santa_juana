@@ -1,174 +1,90 @@
+// lib/features/citizen/presentation/pages/my_reports_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../domain/entities/report_entity.dart';
+import '../../../../di/injection_container.dart' as di;
+import '../bloc/report/report_bloc.dart';
+import '../bloc/report/report_event.dart';
+import '../bloc/report/report_state.dart';
 import '../widgets/report_list_item.dart';
 import 'create_report_screen.dart';
 import 'report_detail_screen.dart';
 
 class MyReportsScreen extends StatefulWidget {
-  const MyReportsScreen({Key? key}) : super(key: key);
+  final String userId;
+  
+  const MyReportsScreen({
+    super.key,
+    required this.userId,
+  });
 
   @override
   State<MyReportsScreen> createState() => _MyReportsScreenState();
 }
 
 class _MyReportsScreenState extends State<MyReportsScreen> {
-  bool _isLoading = true;
-  late List<ReportEntity> _reports;
-  String _filter = 'Todas';
+  late ReportBloc _reportBloc;
 
   @override
   void initState() {
     super.initState();
+    _reportBloc = di.sl<ReportBloc>();
     _loadReports();
   }
 
-  Future<void> _loadReports() async {
-    // Simular carga de datos
-    await Future.delayed(const Duration(seconds: 2));
-    
-    // Datos de ejemplo
-    _reports = _getMockReports();
-    
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  List<ReportEntity> _getMockReports() {
-    return [
-      ReportEntity(
-        id: '1',
-        title: 'Luminaria dañada en Calle Principal',
-        description: 'La luminaria está completamente apagada desde hace una semana.',
-        category: 'Alumbrado Público',
-        location: const LocationData(
-          latitude: -37.0415,
-          longitude: -73.1586,
-          address: 'Calle Principal 123, Coronel',
-        ),
-        citizenId: 'user123',
-        muniId: 'muni1',
-        status: 'En Proceso',
-        imageUrls: ['https://example.com/img1.jpg'],
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 2)),
-        historyLog: [
-          HistoryLogItem(
-            timestamp: DateTime.now().subtract(const Duration(days: 5)),
-            status: 'Enviada',
-            userId: 'user123',
-          ),
-          HistoryLogItem(
-            timestamp: DateTime.now().subtract(const Duration(days: 2)),
-            status: 'En Proceso',
-            comment: 'Se ha asignado a un técnico',
-            userId: 'admin1',
-          ),
-        ],
-      ),
-      ReportEntity(
-        id: '2',
-        title: 'Basura acumulada en plaza',
-        description: 'Hay basura acumulada en la plaza del barrio.',
-        category: 'Basura',
-        location: const LocationData(
-          latitude: -37.0420,
-          longitude: -73.1590,
-          address: 'Plaza Central, Coronel',
-        ),
-        citizenId: 'user123',
-        muniId: 'muni1',
-        status: 'Completada',
-        imageUrls: ['https://example.com/img2.jpg'],
-        createdAt: DateTime.now().subtract(const Duration(days: 10)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-        historyLog: [
-          HistoryLogItem(
-            timestamp: DateTime.now().subtract(const Duration(days: 10)),
-            status: 'Enviada',
-            userId: 'user123',
-          ),
-          HistoryLogItem(
-            timestamp: DateTime.now().subtract(const Duration(days: 8)),
-            status: 'En Proceso',
-            comment: 'Programada limpieza',
-            userId: 'admin1',
-          ),
-          HistoryLogItem(
-            timestamp: DateTime.now().subtract(const Duration(days: 1)),
-            status: 'Completada',
-            comment: 'Se realizó la limpieza de la plaza',
-            userId: 'admin1',
-          ),
-        ],
-      ),
-      ReportEntity(
-        id: '3',
-        title: 'Bache en calle Los Pinos',
-        description: 'Hay un bache grande que dificulta el tránsito.',
-        category: 'Calles y Veredas',
-        location: const LocationData(
-          latitude: -37.0430,
-          longitude: -73.1600,
-          address: 'Calle Los Pinos 456, Coronel',
-        ),
-        citizenId: 'user123',
-        muniId: 'muni1',
-        status: 'Pendiente',
-        imageUrls: ['https://example.com/img3.jpg'],
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-        historyLog: [
-          HistoryLogItem(
-            timestamp: DateTime.now().subtract(const Duration(days: 1)),
-            status: 'Enviada',
-            userId: 'user123',
-          ),
-        ],
-      ),
-    ];
-  }
-
-  List<ReportEntity> _getFilteredReports() {
-    if (_filter == 'Todas') {
-      return _reports;
-    }
-    return _reports.where((report) => report.status == _filter).toList();
+  void _loadReports() {
+    _reportBloc.add(LoadReportsEvent(userId: widget.userId));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis Denuncias'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterDialog,
+    return BlocProvider(
+      create: (context) => _reportBloc,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Mis Denuncias'),
+          actions: [
+            BlocBuilder<ReportBloc, ReportState>(
+              builder: (context, state) {
+                return IconButton(
+                  icon: const Icon(Icons.filter_list),
+                  onPressed: () => _showFilterDialog(context),
+                );
+              },
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: AppTheme.primaryColor,
+          child: const Icon(Icons.add),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => CreateReportScreen(userId: widget.userId)),
+            ).then((_) => _loadReports());
+          },
+        ),
+        body: RefreshIndicator(
+          onRefresh: () async => _loadReports(),
+          color: AppTheme.primaryColor,
+          child: BlocBuilder<ReportBloc, ReportState>(
+            builder: (context, state) {
+              if (state is ReportLoading) {
+                return _buildLoadingList();
+              } else if (state is ReportsLoaded) {
+                return state.filteredReports.isEmpty
+                    ? _buildEmptyState(state.currentFilter)
+                    : _buildReportsList(state.filteredReports);
+              } else if (state is ReportError) {
+                return _buildErrorState(state.message);
+              } else {
+                return _buildLoadingList();
+              }
+            },
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppTheme.primaryColor,
-        child: const Icon(Icons.add),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CreateReportScreen()),
-          ).then((_) => _loadReports());
-        },
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadReports,
-        color: AppTheme.primaryColor,
-        child: _isLoading
-            ? _buildLoadingList()
-            : _getFilteredReports().isEmpty
-                ? _buildEmptyState()
-                : _buildReportsList(),
+        ),
       ),
     );
   }
@@ -196,7 +112,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(String filter) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -208,9 +124,9 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _filter == 'Todas'
+            filter == 'Todas'
                 ? 'No tienes denuncias'
-                : 'No tienes denuncias con estado "$_filter"',
+                : 'No tienes denuncias con estado "$filter"',
             style: const TextStyle(
               fontSize: 18,
               color: Colors.grey,
@@ -224,7 +140,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const CreateReportScreen()),
+                MaterialPageRoute(builder: (_) => CreateReportScreen(userId: widget.userId)),
               ).then((_) => _loadReports());
             },
           ),
@@ -233,13 +149,12 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     );
   }
 
-  Widget _buildReportsList() {
-    final filteredReports = _getFilteredReports();
+  Widget _buildReportsList(List<dynamic> reports) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: filteredReports.length,
+      itemCount: reports.length,
       itemBuilder: (context, index) {
-        final report = filteredReports[index];
+        final report = reports[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: ReportListItem(
@@ -258,7 +173,44 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     );
   }
 
-  void _showFilterDialog() {
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            size: 60,
+            color: AppTheme.errorColor,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Error: $message',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _loadReports,
+            child: const Text('Reintentar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFilterDialog(BuildContext context) {
+    final reportBloc = BlocProvider.of<ReportBloc>(context);
+    final currentState = reportBloc.state;
+    String currentFilter = 'Todas';
+    
+    if (currentState is ReportsLoaded) {
+      currentFilter = currentState.currentFilter;
+    }
+    
     showDialog(
       context: context,
       builder: (context) {
@@ -267,10 +219,11 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildFilterOption('Todas'),
-              _buildFilterOption('Pendiente'),
-              _buildFilterOption('En Proceso'),
-              _buildFilterOption('Completada'),
+              _buildFilterOption(context, 'Todas', currentFilter),
+              _buildFilterOption(context, 'Pendiente', currentFilter),
+              _buildFilterOption(context, 'En Proceso', currentFilter),
+              _buildFilterOption(context, 'Completada', currentFilter),
+              _buildFilterOption(context, 'Rechazada', currentFilter),
             ],
           ),
         );
@@ -278,24 +231,24 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     );
   }
 
-  Widget _buildFilterOption(String status) {
+  Widget _buildFilterOption(BuildContext context, String status, String currentFilter) {
+    final reportBloc = BlocProvider.of<ReportBloc>(context);
+    
     return ListTile(
       title: Text(status),
       leading: Radio<String>(
         value: status,
-        groupValue: _filter,
+        groupValue: currentFilter,
         activeColor: AppTheme.primaryColor,
         onChanged: (value) {
-          setState(() {
-            _filter = value!;
-          });
-          Navigator.pop(context);
+          if (value != null) {
+            reportBloc.add(FilterReportsEvent(filter: value));
+            Navigator.pop(context);
+          }
         },
       ),
       onTap: () {
-        setState(() {
-          _filter = status;
-        });
+        reportBloc.add(FilterReportsEvent(filter: status));
         Navigator.pop(context);
       },
     );

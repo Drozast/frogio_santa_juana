@@ -4,20 +4,13 @@ import '../../domain/entities/user_entity.dart';
 
 class UserModel extends UserEntity {
   const UserModel({
-    required String id,
-    required String email,
-    String? name,
-    required String role,
-    String? muniId,
-    required DateTime createdAt,
-  }) : super(
-          id: id,
-          email: email,
-          name: name,
-          role: role,
-          muniId: muniId,
-          createdAt: createdAt,
-        );
+    required super.id,
+    required super.email,
+    super.name,
+    required super.role,
+    super.muniId,
+    required super.createdAt,
+  });
 
   factory UserModel.fromFirebase(Map<String, dynamic> data, String uid) {
     return UserModel(

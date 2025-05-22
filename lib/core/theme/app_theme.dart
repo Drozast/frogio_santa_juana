@@ -24,10 +24,10 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       primaryColor: primaryColor,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: primaryColor,
         secondary: secondaryColor,
-        background: backgroundLight,
+        surface: backgroundLight,
         error: errorColor,
       ),
       appBarTheme: const AppBarTheme(
@@ -51,7 +51,7 @@ class AppTheme {
           foregroundColor: primaryColor,
         ),
       ),
-      textTheme: GoogleFonts.poppinsTextTheme(),
+      textTheme: GoogleFonts.montserratTextTheme(),
       scaffoldBackgroundColor: backgroundLight,
       cardTheme: CardTheme(
         elevation: 2,
