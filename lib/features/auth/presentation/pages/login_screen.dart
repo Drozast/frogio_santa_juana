@@ -82,6 +82,13 @@ class _LoginScreenState extends State<LoginScreen> {
               backgroundColor: AppTheme.errorColor,
             ),
           );
+        } else if (state is PasswordResetSent) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Se ha enviado un correo para restablecer tu contraseña'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
         }
       },
       builder: (context, state) {
@@ -99,8 +106,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Logo municipal
                       Image.asset(
                         'assets/images/muni-vertical.png',
-                        height: 250,
-                        width: 250,
+                        height: 150,
+                        width: 150,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             height: 150,
@@ -118,7 +125,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      // Título
                       const Text(
                         'Bienvenido a FROGIO',
                         style: TextStyle(
@@ -284,22 +290,28 @@ class _LoginScreenState extends State<LoginScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
-          TextButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                // TODO: Implementar lógica de restablecimiento de contraseña
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Se ha enviado un correo para restablecer tu contraseña',
-                    ),
-                    backgroundColor: AppTheme.successColor,
-                  ),
-                );
-              }
+          BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              return TextButton(
+                onPressed: state is AuthLoading
+                    ? null
+                    : () {
+                        if (formKey.currentState!.validate()) {
+                          context.read<AuthBloc>().add(
+                            ForgotPasswordEvent(email: emailController.text.trim()),
+                          );
+                          Navigator.pop(context);
+                        }
+                      },
+                child: state is AuthLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Enviar'),
+              );
             },
-            child: const Text('Enviar'),
           ),
         ],
       ),

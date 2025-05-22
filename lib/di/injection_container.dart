@@ -10,6 +10,7 @@ import '../core/services/session_timeout_service.dart';
 import '../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../features/auth/data/datasources/auth_remote_data_source_impl.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
+import '../features/auth/domain/usecases/forgot_password.dart';
 import '../features/auth/domain/usecases/get_current_user.dart';
 import '../features/auth/domain/usecases/register_user.dart';
 import '../features/auth/domain/usecases/sign_in_user.dart';
@@ -35,6 +36,7 @@ Future<void> init() async {
       signInUser: sl(),
       signOutUser: sl(),
       registerUser: sl(),
+      forgotPassword: sl(),
     ),
   );
 
@@ -43,6 +45,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SignInUser(sl()));
   sl.registerLazySingleton(() => SignOutUser(sl()));
   sl.registerLazySingleton(() => RegisterUser(sl()));
+  sl.registerLazySingleton(() => ForgotPassword(sl()));
 
   // Repository - Auth
   sl.registerLazySingleton<AuthRepository>(

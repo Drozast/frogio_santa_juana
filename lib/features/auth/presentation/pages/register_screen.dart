@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/password_validator.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../dashboard/presentation/pages/dashboard_screen.dart';
 import '../bloc/auth_bloc.dart';
@@ -23,6 +24,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _showPasswordRequirements = false;
 
   @override
   void dispose() {
@@ -66,7 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Icono en lugar de animación
+                      // Icono
                       Container(
                         height: 150,
                         child: Icon(
@@ -76,7 +78,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Título
                       const Text(
                         'Crear Cuenta',
                         style: TextStyle(
@@ -107,6 +108,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           if (value == null || value.isEmpty) {
                             return 'Por favor ingresa tu nombre';
                           }
+                          if (value.length < 2) {
+                            return 'El nombre debe tener al menos 2 caracteres';
+                          }
                           return null;
                         },
                       ),
@@ -130,10 +134,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      // Campo contraseña
+                      // Campo contraseña con validación estricta
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
+                        onTap: () {
+                          setState(() {
+                            _showPasswordRequirements = true;
+                          });
+                        },
+                        onChanged: (value) {
+                          setState(() {});
+                        },
                         decoration: InputDecoration(
                           labelText: 'Contraseña',
                           prefixIcon: const Icon(Icons.lock),
@@ -148,17 +160,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             },
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa una contraseña';
-                          }
-                          if (value.length < 6) {
-                            return 'La contraseña debe tener al menos 6 caracteres';
-                          }
-                          return null;
-                        },
+                        validator: PasswordValidator.validate,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
+                      // Requisitos de contraseña
+                      if (_showPasswordRequirements) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Requisitos de contraseña:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              ...PasswordValidator.getRequirements().map((req) {
+                                bool isValid = _validateRequirement(req, _passwordController.text);
+                                return Row(
+                                  children: [
+                                    Icon(
+                                      isValid ? Icons.check_circle : Icons.radio_button_unchecked,
+                                      size: 16,
+                                      color: isValid ? AppTheme.successColor : Colors.grey,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        req,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isValid ? AppTheme.successColor : Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }).toList(),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
                       // Campo confirmar contraseña
                       TextFormField(
                         controller: _confirmPasswordController,
@@ -227,5 +278,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       },
     );
+  }
+
+  bool _validateRequirement(String requirement, String password) {
+    switch (requirement) {
+      case 'Mínimo 8 caracteres':
+        return password.length >= 8;
+      case 'Al menos una mayúscula':
+        return password.contains(RegExp(r'[A-Z]'));
+      case 'Al menos un número':
+        return password.contains(RegExp(r'[0-9]'));
+      case 'Al menos un carácter especial (!@#\$%^&*)':
+        return password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+      default:
+        return false;
+    }
   }
 }
