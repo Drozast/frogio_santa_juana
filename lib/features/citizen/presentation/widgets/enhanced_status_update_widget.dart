@@ -25,7 +25,8 @@ class EnhancedStatusUpdateWidget extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<EnhancedStatusUpdateWidget> createState() => _EnhancedStatusUpdateWidgetState();
+  State<EnhancedStatusUpdateWidget> createState() =>
+      _EnhancedStatusUpdateWidgetState();
 }
 
 class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
@@ -38,7 +39,7 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
   String _priority = 'Normal';
   bool _notifyCitizen = true;
   bool _requiresInspection = false;
-  
+
   final Map<String, StatusInfo> _statusOptions = {
     'Recibida': StatusInfo(
       'Recibida',
@@ -335,7 +336,7 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
                 border: OutlineInputBorder(),
               ),
               validator: (value) {
-                if (_selectedStatus != widget.report.status && 
+                if (_selectedStatus != widget.report.status &&
                     (value == null || value.trim().isEmpty)) {
                   return 'El comentario es requerido al cambiar el estado';
                 }
@@ -388,7 +389,7 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
             },
           ),
           const SizedBox(height: 16),
-          
+
           // Fecha estimada de finalización
           const Text(
             'Fecha estimada de finalización:',
@@ -417,7 +418,7 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Opciones adicionales
           CheckboxListTile(
             title: const Text('Notificar al ciudadano'),
@@ -430,7 +431,7 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
             },
             activeColor: AppTheme.primaryColor,
           ),
-          
+
           CheckboxListTile(
             title: const Text('Requiere inspección adicional'),
             subtitle: const Text('Programar visita técnica'),
@@ -451,29 +452,31 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
     final info = _statusOptions[status]!;
     final isSelected = _selectedStatus == status;
     final isCurrent = widget.report.status == status;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: isCurrent ? null : () {
-            setState(() {
-              _selectedStatus = status;
-            });
-          },
+          onTap: isCurrent
+              ? null
+              : () {
+                  setState(() {
+                    _selectedStatus = status;
+                  });
+                },
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isSelected 
+              color: isSelected
                   ? info.color.withOpacity(0.1)
                   : isCurrent
                       ? Colors.grey.shade100
                       : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected 
+                color: isSelected
                     ? info.color
                     : isCurrent
                         ? Colors.grey.shade400
@@ -520,7 +523,8 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
                 ),
                 if (isCurrent)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(12),
@@ -572,9 +576,10 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
               return CustomButton(
                 text: 'Actualizar Estado',
                 isLoading: isLoading,
-                onPressed: isLoading || _selectedStatus == widget.report.status
-                    ? null
-                    : _updateStatus,
+                onPressed:
+                    (isLoading || _selectedStatus == widget.report.status)
+                        ? () {} // ✅ Correcto - función vacía
+                        : _updateStatus,
               );
             },
           ),
@@ -585,7 +590,8 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
 
   List<String> _getAvailableStatuses() {
     return _statusOptions.entries
-        .where((entry) => entry.value.allowedRoles.contains(widget.currentUserRole))
+        .where((entry) =>
+            entry.value.allowedRoles.contains(widget.currentUserRole))
         .map((entry) => entry.key)
         .toList();
   }
@@ -596,32 +602,43 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
 
   Color _getPriorityColor(String priority) {
     switch (priority) {
-      case 'Baja': return Colors.green;
-      case 'Normal': return Colors.blue;
-      case 'Alta': return Colors.orange;
-      case 'Urgente': return Colors.red;
-      default: return Colors.grey;
+      case 'Baja':
+        return Colors.green;
+      case 'Normal':
+        return Colors.blue;
+      case 'Alta':
+        return Colors.orange;
+      case 'Urgente':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 
   IconData _getPriorityIcon(String priority) {
     switch (priority) {
-      case 'Baja': return Icons.arrow_downward;
-      case 'Normal': return Icons.remove;
-      case 'Alta': return Icons.arrow_upward;
-      case 'Urgente': return Icons.priority_high;
-      default: return Icons.help;
+      case 'Baja':
+        return Icons.arrow_downward;
+      case 'Normal':
+        return Icons.remove;
+      case 'Alta':
+        return Icons.arrow_upward;
+      case 'Urgente':
+        return Icons.priority_high;
+      default:
+        return Icons.help;
     }
   }
 
   Future<void> _selectEstimatedCompletion() async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _estimatedCompletion ?? DateTime.now().add(const Duration(days: 7)),
+      initialDate:
+          _estimatedCompletion ?? DateTime.now().add(const Duration(days: 7)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
-    
+
     if (picked != null) {
       setState(() {
         _estimatedCompletion = picked;
@@ -632,15 +649,15 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
   void _updateStatus() {
     if (_formKey.currentState!.validate()) {
       context.read<ReportBloc>().add(
-        UpdateReportStatusEvent(
-          reportId: widget.report.id,
-          status: _selectedStatus,
-          comment: _commentController.text.trim().isEmpty 
-              ? null 
-              : _commentController.text.trim(),
-          userId: widget.currentUserId,
-        ),
-      );
+            UpdateReportStatusEvent(
+              reportId: widget.report.id,
+              status: _selectedStatus,
+              comment: _commentController.text.trim().isEmpty
+                  ? null
+                  : _commentController.text.trim(),
+              userId: widget.currentUserId,
+            ),
+          );
     }
   }
 
@@ -670,5 +687,6 @@ class StatusInfo {
   final Color color;
   final List<String> allowedRoles;
 
-  StatusInfo(this.name, this.description, this.icon, this.color, this.allowedRoles);
+  StatusInfo(
+      this.name, this.description, this.icon, this.color, this.allowedRoles);
 }

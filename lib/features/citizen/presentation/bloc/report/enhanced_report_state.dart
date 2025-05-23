@@ -231,7 +231,7 @@ class ReportUpdateNotification extends ReportState {
   });
   
   @override
-  List<Object> get props => [reportId, message, newStatus];
+  List<Object?> get props => [reportId, message, newStatus];
 }
 
 // OFFLINE STATES

@@ -523,7 +523,7 @@ class _EnhancedResponseInputWidgetState extends State<EnhancedResponseInputWidge
               return CustomButton(
                 text: 'Enviar Respuesta',
                 isLoading: isLoading,
-                onPressed: isLoading ? null : _submitResponse,
+                onPressed: isLoading ? () {} : _submitResponse,
               );
             },
           ),
