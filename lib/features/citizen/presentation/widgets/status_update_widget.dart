@@ -4,10 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
-import '../../domain/entities/enhanced_report_entity.dart';
-import '../bloc/report/enhanced_report_bloc.dart';
-import '../bloc/report/enhanced_report_event.dart';
-import '../bloc/report/enhanced_report_state.dart';
+import '../../domain/entities/report_entity.dart';
+import '../bloc/report/report_bloc.dart';
+import '../bloc/report/report_event.dart';
+import '../bloc/report/report_state.dart';
 
 class StatusUpdateWidget extends StatefulWidget {
   final ReportEntity report;
@@ -25,34 +25,34 @@ class StatusUpdateWidget extends StatefulWidget {
 
 class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
   final _commentController = TextEditingController();
-  late ReportStatus _selectedStatus;
+  late String _selectedStatus;
   
-  final Map<ReportStatus, StatusInfo> _statusOptions = {
-    ReportStatus.reviewing: StatusInfo(
+  final Map<String, StatusInfo> _statusOptions = {
+    'En Revisión': StatusInfo(
       'En Revisión',
       'La denuncia está siendo revisada por el equipo',
       Icons.visibility,
       Colors.orange,
     ),
-    ReportStatus.inProgress: StatusInfo(
+    'En Proceso': StatusInfo(
       'En Proceso',
       'Se está trabajando en la solución del problema',
       Icons.build,
       Colors.blue,
     ),
-    ReportStatus.resolved: StatusInfo(
-      'Resuelta',
+    'Completada': StatusInfo(
+      'Completada',
       'El problema ha sido solucionado',
       Icons.check_circle,
       AppTheme.successColor,
     ),
-    ReportStatus.rejected: StatusInfo(
+    'Rechazada': StatusInfo(
       'Rechazada',
       'La denuncia no procede o no es válida',
       Icons.cancel,
       AppTheme.errorColor,
     ),
-    ReportStatus.archived: StatusInfo(
+    'Archivada': StatusInfo(
       'Archivada',
       'La denuncia ha sido archivada',
       Icons.archive,
@@ -76,11 +76,22 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
   Widget build(BuildContext context) {
     return BlocListener<ReportBloc, ReportState>(
       listener: (context, state) {
-        if (state is ReportStatusUpdated) {
+        if (state is ReportDetailLoaded) {
           Navigator.of(context).pop();
           widget.onStatusUpdated?.call();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Estado actualizado exitosamente'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
         } else if (state is ReportError) {
-          _showError(state.message);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${state.message}'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
         }
       },
       child: AlertDialog(
@@ -130,7 +141,7 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            widget.report.status.displayName,
+                            widget.report.status,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -152,8 +163,7 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
               ),
               const SizedBox(height: 12),
               
-              ...ReportStatus.values
-                  .where((status) => _statusOptions.containsKey(status))
+              ...(_statusOptions.keys)
                   .map((status) => _buildStatusOption(status))
                   .toList(),
               
@@ -217,11 +227,11 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
           ),
           BlocBuilder<ReportBloc, ReportState>(
             builder: (context, state) {
+              final isLoading = state is ReportLoading;
               return CustomButton(
                 text: 'Actualizar',
-                isLoading: state is ReportStatusUpdating,
-                onPressed: state is ReportStatusUpdating || 
-                          _selectedStatus == widget.report.status
+                isLoading: isLoading,
+                onPressed: isLoading || _selectedStatus == widget.report.status
                     ? null
                     : _updateStatus,
               );
@@ -232,7 +242,7 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
     );
   }
 
-  Widget _buildStatusOption(ReportStatus status) {
+  Widget _buildStatusOption(String status) {
     final info = _statusOptions[status]!;
     final isSelected = _selectedStatus == status;
     final isCurrent = widget.report.status == status;
@@ -334,13 +344,12 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
     );
   }
 
-  Color _getStatusColor(ReportStatus status) {
+  Color _getStatusColor(String status) {
     return _statusOptions[status]?.color ?? Colors.grey;
   }
 
   void _updateStatus() {
-    // Obtener información del usuario actual
-    // En una implementación real, esto vendría del AuthBloc
+    // En implementación real, necesitarías obtener el userId del AuthBloc
     const currentUserId = 'current_user_id';
     
     context.read<ReportBloc>().add(
@@ -354,15 +363,6 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
       ),
     );
   }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.errorColor,
-      ),
-    );
-  }
 }
 
 class StatusInfo {
@@ -372,4 +372,22 @@ class StatusInfo {
   final Color color;
 
   StatusInfo(this.name, this.description, this.icon, this.color);
+}
+
+// Evento para actualizar estado (agregar a report_event.dart)
+class UpdateReportStatusEvent extends ReportEvent {
+  final String reportId;
+  final String status;
+  final String? comment;
+  final String userId;
+  
+  const UpdateReportStatusEvent({
+    required this.reportId,
+    required this.status,
+    this.comment,
+    required this.userId,
+  });
+  
+  @override
+  List<Object?> get props => [reportId, status, comment, userId];
 }

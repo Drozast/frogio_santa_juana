@@ -7,10 +7,9 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
-import '../../domain/entities/enhanced_report_entity.dart';
-import '../bloc/report/enhanced_report_bloc.dart';
-import '../bloc/report/enhanced_report_event.dart';
-import '../bloc/report/enhanced_report_state.dart';
+import '../bloc/report/report_bloc.dart';
+import '../bloc/report/report_event.dart';
+import '../bloc/report/report_state.dart';
 
 class ResponseInputWidget extends StatefulWidget {
   final String reportId;
@@ -45,9 +44,22 @@ class _ResponseInputWidgetState extends State<ResponseInputWidget> {
   Widget build(BuildContext context) {
     return BlocListener<ReportBloc, ReportState>(
       listener: (context, state) {
-        if (state is ResponseAdded) {
+        if (state is ReportDetailLoaded) {
           _clearForm();
           widget.onResponseAdded?.call();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Respuesta agregada exitosamente'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        } else if (state is ReportError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${state.message}'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
         }
       },
       child: Container(
@@ -203,12 +215,11 @@ class _ResponseInputWidgetState extends State<ResponseInputWidget> {
                         width: double.infinity,
                         child: BlocBuilder<ReportBloc, ReportState>(
                           builder: (context, state) {
+                            final isLoading = state is ReportLoading;
                             return CustomButton(
                               text: 'Enviar Respuesta',
-                              isLoading: state is ResponseAdding,
-                              onPressed: state is ResponseAdding 
-                                  ? null 
-                                  : _submitResponse,
+                              isLoading: isLoading,
+                              onPressed: isLoading ? null : _submitResponse,
                             );
                           },
                         ),
@@ -281,14 +292,18 @@ class _ResponseInputWidgetState extends State<ResponseInputWidget> {
         });
       }
     } catch (e) {
-      _showError('Error al seleccionar imagen: ${e.toString()}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al seleccionar imagen: ${e.toString()}'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
     }
   }
 
   void _submitResponse() {
     if (_formKey.currentState!.validate()) {
-      // Obtener información del usuario actual
-      // En una implementación real, esto vendría del AuthBloc
+      // En implementación real, obtener del AuthBloc
       const currentUserId = 'current_user_id';
       const currentUserName = 'Inspector/Admin';
       
@@ -313,13 +328,26 @@ class _ResponseInputWidgetState extends State<ResponseInputWidget> {
       _isExpanded = false;
     });
   }
+}
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.errorColor,
-      ),
-    );
-  }
+// Eventos adicionales para report_event.dart
+class AddReportResponseEvent extends ReportEvent {
+  final String reportId;
+  final String responderId;
+  final String responderName;
+  final String message;
+  final List<File>? attachments;
+  final bool isPublic;
+  
+  const AddReportResponseEvent({
+    required this.reportId,
+    required this.responderId,
+    required this.responderName,
+    required this.message,
+    this.attachments,
+    this.isPublic = true,
+  });
+  
+  @override
+  List<Object?> get props => [reportId, responderId, responderName, message, attachments, isPublic];
 }

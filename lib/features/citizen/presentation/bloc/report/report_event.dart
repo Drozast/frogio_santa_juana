@@ -59,3 +59,58 @@ class FilterReportsEvent extends ReportEvent {
   @override
   List<Object> get props => [filter];
 }
+
+class UpdateReportStatusEvent extends ReportEvent {
+  final String reportId;
+  final String status;
+  final String? comment;
+  final String userId;
+  
+  const UpdateReportStatusEvent({
+    required this.reportId,
+    required this.status,
+    this.comment,
+    required this.userId,
+  });
+  
+  @override
+  List<Object?> get props => [reportId, status, comment, userId];
+}
+
+class AddReportResponseEvent extends ReportEvent {
+  final String reportId;
+  final String responderId;
+  final String responderName;
+  final String message;
+  final List<File>? attachments;
+  final bool isPublic;
+  
+  const AddReportResponseEvent({
+    required this.reportId,
+    required this.responderId,
+    required this.responderName,
+    required this.message,
+    this.attachments,
+    this.isPublic = true,
+  });
+  
+  @override
+  List<Object?> get props => [reportId, responderId, responderName, message, attachments, isPublic];
+}
+
+// Agregar al final del archivo:
+
+class AssignReportEvent extends ReportEvent {
+  final String reportId;
+  final String inspectorId;
+  final String? note;
+  
+  const AssignReportEvent({
+    required this.reportId,
+    required this.inspectorId,
+    this.note,
+  });
+  
+  @override
+  List<Object?> get props => [reportId, inspectorId, note];
+}

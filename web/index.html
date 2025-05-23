@@ -19,6 +19,13 @@
   <title>FROGIO Santa Juana</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- Google Maps JavaScript API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQ81wHnGrU_rbPUXE__OhNm-h2iB8Hbeo&libraries=geometry"></script>
+
+<!-- Geolocation permissions -->
+<meta name="permissions" content="geolocation">
+
+
   <!-- Firebase v9+ compatible scripts -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -34,6 +41,16 @@
   </script>
 </head>
 <body>
+
+  <script>
+  // Configuración para permisos de geolocalización en web
+  if ('geolocation' in navigator) {
+    // Geolocation is available
+  } else {
+    console.log('Geolocation is not supported');
+  }
+</script>
   <script src="flutter_bootstrap.js" async></script>
+  
 </body>
 </html>

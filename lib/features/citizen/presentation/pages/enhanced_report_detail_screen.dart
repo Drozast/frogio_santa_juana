@@ -7,34 +7,38 @@ import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:timeline_tile/timeline_tile.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../di/injection_container.dart' as di;
-import '../../domain/entities/enhanced_report_entity.dart';
-import '../bloc/report/enhanced_report_bloc.dart';
-import '../bloc/report/enhanced_report_event.dart';
-import '../bloc/report/enhanced_report_state.dart';
+import '../../domain/entities/report_entity.dart';
+import '../bloc/report/report_bloc.dart';
+import '../bloc/report/report_event.dart';
+import '../bloc/report/report_state.dart';
 import '../widgets/response_input_widget.dart';
 import '../widgets/status_update_widget.dart';
 
-class ReportDetailScreen extends StatefulWidget {
+class EnhancedReportDetailScreen extends StatefulWidget {
   final String reportId;
   final String? currentUserRole;
+  final String? currentUserId;
 
-  const ReportDetailScreen({
+  const EnhancedReportDetailScreen({
     super.key,
     required this.reportId,
     this.currentUserRole,
+    this.currentUserId,
   });
 
   @override
-  State<ReportDetailScreen> createState() => _ReportDetailScreenState();
+  State<EnhancedReportDetailScreen> createState() => _EnhancedReportDetailScreenState();
 }
 
-class _ReportDetailScreenState extends State<ReportDetailScreen>
+class _EnhancedReportDetailScreenState extends State<EnhancedReportDetailScreen>
     with SingleTickerProviderStateMixin {
   late ReportBloc _reportBloc;
   late TabController _tabController;
+  GoogleMapController? _mapController;
   final Set<Marker> _markers = {};
 
   @override
@@ -48,6 +52,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _mapController?.dispose();
     super.dispose();
   }
 
@@ -61,65 +66,12 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
       create: (context) => _reportBloc,
       child: BlocListener<ReportBloc, ReportState>(
         listener: (context, state) {
-          if (state is ReportStatusUpdated) {
-            _showSuccessSnackBar('Estado actualizado: ${state.newStatus.displayName}');
-            _loadReportDetails(); // Recargar datos
-          } else if (state is ResponseAdded) {
-            _showSuccessSnackBar('Respuesta agregada exitosamente');
-            _loadReportDetails(); // Recargar datos
-          } else if (state is ReportError) {
+          if (state is ReportError) {
             _showErrorSnackBar(state.message);
           }
         },
         child: Scaffold(
-          appBar: AppBar(
-            title: const Text('Detalle de Denuncia'),
-            actions: [
-              BlocBuilder<ReportBloc, ReportState>(
-                builder: (context, state) {
-                  if (state is ReportDetailLoaded) {
-                    return PopupMenuButton<String>(
-                      onSelected: (value) => _handleMenuAction(value, state.report),
-                      itemBuilder: (context) => [
-                        if (_canUpdateStatus())
-                          const PopupMenuItem(
-                            value: 'update_status',
-                            child: Row(
-                              children: [
-                                Icon(Icons.update),
-                                SizedBox(width: 8),
-                                Text('Actualizar Estado'),
-                              ],
-                            ),
-                          ),
-                        const PopupMenuItem(
-                          value: 'share',
-                          child: Row(
-                            children: [
-                              Icon(Icons.share),
-                              SizedBox(width: 8),
-                              Text('Compartir'),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'refresh',
-                          child: Row(
-                            children: [
-                              Icon(Icons.refresh),
-                              SizedBox(width: 8),
-                              Text('Actualizar'),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-            ],
-          ),
+          appBar: _buildAppBar(),
           body: BlocBuilder<ReportBloc, ReportState>(
             builder: (context, state) {
               if (state is ReportLoading) {
@@ -138,25 +90,71 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
     );
   }
 
-  Widget _buildReportDetail(ReportEntity report) {
-    // Preparar marcador del mapa
-    if (report.location.latitude != 0 && report.location.longitude != 0) {
-      _markers.clear();
-      _markers.add(
-        Marker(
-          markerId: MarkerId(report.id),
-          position: LatLng(
-            report.location.latitude,
-            report.location.longitude,
-          ),
-          infoWindow: InfoWindow(
-            title: report.title,
-            snippet: report.location.address,
-          ),
+  AppBar _buildAppBar() {
+    return AppBar(
+      title: const Text('Detalle de Denuncia'),
+      elevation: 0,
+      actions: [
+        BlocBuilder<ReportBloc, ReportState>(
+          builder: (context, state) {
+            if (state is ReportDetailLoaded) {
+              return PopupMenuButton<String>(
+                onSelected: (value) => _handleMenuAction(value, state.report),
+                itemBuilder: (context) => [
+                  if (_canUpdateStatus())
+                    const PopupMenuItem(
+                      value: 'update_status',
+                      child: Row(
+                        children: [
+                          Icon(Icons.update),
+                          SizedBox(width: 8),
+                          Text('Actualizar Estado'),
+                        ],
+                      ),
+                    ),
+                  const PopupMenuItem(
+                    value: 'share',
+                    child: Row(
+                      children: [
+                        Icon(Icons.share),
+                        SizedBox(width: 8),
+                        Text('Compartir'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'directions',
+                    child: Row(
+                      children: [
+                        Icon(Icons.directions),
+                        SizedBox(width: 8),
+                        Text('Cómo llegar'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'refresh',
+                    child: Row(
+                      children: [
+                        Icon(Icons.refresh),
+                        SizedBox(width: 8),
+                        Text('Actualizar'),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }
+            return const SizedBox.shrink();
+          },
         ),
-      );
-    }
+      ],
+    );
+  }
 
+  Widget _buildReportDetail(ReportEntity report) {
+    _setupMapMarker(report);
+    
     return Column(
       children: [
         // Header con información básica
@@ -223,35 +221,31 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(
-                Icons.category,
-                size: 16,
-                color: Colors.grey.shade600,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                report.category,
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-              const SizedBox(width: 16),
-              Icon(
-                Icons.priority_high,
-                size: 16,
-                color: _getPriorityColor(report.priority),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                report.priority.displayName,
-                style: TextStyle(color: _getPriorityColor(report.priority)),
-              ),
-              const Spacer(),
-              Text(
-                'ID: ${report.id.substring(0, 8)}',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 12,
+              _buildCategoryChip(report.category),
+              const SizedBox(width: 8),
+              if (report.location.address != null)
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        size: 16,
+                        color: Colors.grey.shade600,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          report.location.address!,
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 12,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -265,6 +259,14 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
               const SizedBox(width: 4),
               Text(
                 'Creada: ${DateFormat('dd/MM/yyyy HH:mm').format(report.createdAt)}',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 12,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'ID: ${report.id.substring(0, 8)}',
                 style: TextStyle(
                   color: Colors.grey.shade600,
                   fontSize: 12,
@@ -287,23 +289,18 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
           _buildSection(
             'Descripción',
             Icons.description,
-            Text(report.description),
+            Text(
+              report.description,
+              style: const TextStyle(fontSize: 14),
+            ),
           ),
           
-          // Referencias (si existen)
-          if (report.references != null && report.references!.isNotEmpty)
-            _buildSection(
-              'Referencias',
-              Icons.place,
-              Text(report.references!),
-            ),
-          
           // Multimedia
-          if (report.attachments.isNotEmpty)
+          if (report.imageUrls.isNotEmpty)
             _buildSection(
-              'Evidencia Multimedia',
+              'Evidencia Fotográfica',
               Icons.photo_library,
-              _buildMediaGallery(report.attachments),
+              _buildPhotoGallery(report.imageUrls),
             ),
           
           // Ubicación
@@ -319,35 +316,67 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
             Icons.info,
             Column(
               children: [
-                _buildInfoRow('Prioridad', report.priority.displayName),
                 _buildInfoRow('Categoría', report.category),
-                _buildInfoRow('Estado', report.status.displayName),
-                if (report.assignedToId != null)
-                  _buildInfoRow('Asignado a', report.assignedToId!),
+                _buildInfoRow('Estado', report.status),
                 _buildInfoRow(
                   'Última actualización',
                   DateFormat('dd/MM/yyyy HH:mm').format(report.updatedAt),
                 ),
+                _buildInfoRow(
+                  'Historial de cambios',
+                  '${report.historyLog.length} evento(s)',
+                ),
               ],
             ),
           ),
+          
+          // Acciones rápidas
+          if (_canUpdateStatus())
+            _buildSection(
+              'Acciones',
+              Icons.settings,
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showStatusUpdateDialog(report),
+                      icon: const Icon(Icons.update),
+                      label: const Text('Actualizar Estado'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openInMaps(report),
+                      icon: const Icon(Icons.directions),
+                      label: const Text('Cómo llegar'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
   }
 
   Widget _buildResponsesTab(ReportEntity report) {
+    // Simular respuestas (en implementación real vendrían del reporte)
+    final responses = <Map<String, dynamic>>[];
+    
     return Column(
       children: [
         // Lista de respuestas
         Expanded(
-          child: report.responses.isEmpty
+          child: responses.isEmpty
               ? _buildEmptyResponses()
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  itemCount: report.responses.length,
+                  itemCount: responses.length,
                   itemBuilder: (context, index) {
-                    return _buildResponseCard(report.responses[index]);
+                    return _buildResponseCard(responses[index]);
                   },
                 ),
         ),
@@ -365,11 +394,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
   Widget _buildHistoryTab(ReportEntity report) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: report.statusHistory.length,
+      itemCount: report.historyLog.length,
       itemBuilder: (context, index) {
-        final historyItem = report.statusHistory[index];
+        final historyItem = report.historyLog[index];
         final isFirst = index == 0;
-        final isLast = index == report.statusHistory.length - 1;
+        final isLast = index == report.historyLog.length - 1;
         
         return TimelineTile(
           alignment: TimelineAlign.start,
@@ -411,7 +440,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      historyItem.status.displayName,
+                      historyItem.status,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: _getStatusColor(historyItem.status),
@@ -426,10 +455,10 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
                     ),
                   ],
                 ),
-                if (historyItem.userName != null) ...[
+                if (historyItem.userId != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'Por: ${historyItem.userName}',
+                    'Por: ${historyItem.userId}',
                     style: const TextStyle(
                       color: Colors.grey,
                       fontSize: 12,
@@ -477,16 +506,15 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
     );
   }
 
-  Widget _buildMediaGallery(List<MediaAttachment> attachments) {
+  Widget _buildPhotoGallery(List<String> imageUrls) {
     return SizedBox(
       height: 120,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: attachments.length,
+        itemCount: imageUrls.length,
         itemBuilder: (context, index) {
-          final attachment = attachments[index];
           return GestureDetector(
-            onTap: () => _openMediaViewer(attachments, index),
+            onTap: () => _openPhotoViewer(imageUrls, index),
             child: Container(
               width: 120,
               margin: const EdgeInsets.only(right: 8),
@@ -496,48 +524,19 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (attachment.type == MediaType.image)
-                      CachedNetworkImage(
-                        imageUrl: attachment.url,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                        errorWidget: (context, url, error) => const Icon(Icons.error),
-                      )
-                    else
-                      Container(
-                        color: Colors.black,
-                        child: const Icon(
-                          Icons.play_circle_outline,
-                          color: Colors.white,
-                          size: 32,
-                        ),
-                      ),
-                    
-                    // Overlay con tipo de archivo
-                    Positioned(
-                      bottom: 4,
-                      right: 4,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Icon(
-                          attachment.type == MediaType.image
-                              ? Icons.image
-                              : Icons.videocam,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
+                child: CachedNetworkImage(
+                  imageUrl: imageUrls[index],
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey.shade200,
+                    child: const Center(
+                      child: CircularProgressIndicator(),
                     ),
-                  ],
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.error),
+                  ),
                 ),
               ),
             ),
@@ -556,8 +555,6 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
         // Dirección
         if (location.address != null)
           Text(location.address!)
-        else if (location.manualAddress != null)
-          Text(location.manualAddress!)
         else
           const Text('Dirección no disponible'),
         
@@ -590,10 +587,13 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
               markers: _markers,
               zoomControlsEnabled: false,
               myLocationButtonEnabled: false,
-              scrollGesturesEnabled: false,
-              zoomGesturesEnabled: false,
+              scrollGesturesEnabled: true,
+              zoomGesturesEnabled: true,
               rotateGesturesEnabled: false,
               tiltGesturesEnabled: false,
+              onMapCreated: (GoogleMapController controller) {
+                _mapController = controller;
+              },
             ),
           ),
         ],
@@ -623,7 +623,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
     );
   }
 
-  Widget _buildResponseCard(ReportResponse response) {
+  Widget _buildResponseCard(Map<String, dynamic> response) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -637,7 +637,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
                   radius: 16,
                   backgroundColor: AppTheme.primaryColor,
                   child: Text(
-                    response.responderName.substring(0, 1).toUpperCase(),
+                    (response['responderName'] as String).substring(0, 1).toUpperCase(),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -651,11 +651,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        response.responderName,
+                        response['responderName'],
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        DateFormat('dd/MM/yyyy HH:mm').format(response.createdAt),
+                        DateFormat('dd/MM/yyyy HH:mm').format(response['createdAt']),
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 12,
@@ -664,7 +664,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
                     ],
                   ),
                 ),
-                if (!response.isPublic)
+                if (!(response['isPublic'] as bool))
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -683,13 +683,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
               ],
             ),
             const SizedBox(height: 12),
-            Text(response.message),
-            
-            // Attachments de la respuesta
-            if (response.attachments.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _buildMediaGallery(response.attachments),
-            ],
+            Text(response['message']),
           ],
         ),
       ),
@@ -750,7 +744,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
     );
   }
 
-  Widget _buildStatusBadge(ReportStatus status) {
+  Widget _buildStatusBadge(String status) {
     final color = _getStatusColor(status);
     
     return Container(
@@ -761,7 +755,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
         border: Border.all(color: color, width: 1),
       ),
       child: Text(
-        status.displayName,
+        status,
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.bold,
@@ -771,56 +765,118 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
     );
   }
 
-  // Métodos auxiliares
+  Widget _buildCategoryChip(String category) {
+    final color = _getCategoryColor(category);
+    final icon = _getCategoryIcon(category);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            category,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Color _getStatusColor(ReportStatus status) {
+  // Helper methods
+
+  void _setupMapMarker(ReportEntity report) {
+    if (report.location.latitude != 0 && report.location.longitude != 0) {
+      _markers.clear();
+      _markers.add(
+        Marker(
+          markerId: MarkerId(report.id),
+          position: LatLng(
+            report.location.latitude,
+            report.location.longitude,
+          ),
+          infoWindow: InfoWindow(
+            title: report.title,
+            snippet: report.location.address,
+          ),
+        ),
+      );
+    }
+  }
+
+  Color _getStatusColor(String status) {
     switch (status) {
-      case ReportStatus.draft:
-        return Colors.grey;
-      case ReportStatus.submitted:
+      case 'Pendiente':
+        return Colors.orange;
+      case 'En Proceso':
         return Colors.blue;
-      case ReportStatus.reviewing:
-        return Colors.orange;
-      case ReportStatus.inProgress:
-        return Colors.purple;
-      case ReportStatus.resolved:
+      case 'Completada':
         return AppTheme.successColor;
-      case ReportStatus.rejected:
+      case 'Rechazada':
         return AppTheme.errorColor;
-      case ReportStatus.archived:
+      default:
         return Colors.grey;
     }
   }
 
-  Color _getPriorityColor(Priority priority) {
-    switch (priority) {
-      case Priority.low:
-        return Colors.green;
-      case Priority.medium:
-        return Colors.orange;
-      case Priority.high:
-        return Colors.red;
-      case Priority.urgent:
-        return Colors.purple;
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'Enviada':
+        return Icons.send;
+      case 'Revisada':
+        return Icons.visibility;
+      case 'En Proceso':
+        return Icons.build;
+      case 'Completada':
+        return Icons.check_circle;
+      case 'Rechazada':
+        return Icons.cancel;
+      default:
+        return Icons.info;
     }
   }
 
-  IconData _getStatusIcon(ReportStatus status) {
-    switch (status) {
-      case ReportStatus.draft:
-        return Icons.edit;
-      case ReportStatus.submitted:
-        return Icons.send;
-      case ReportStatus.reviewing:
-        return Icons.visibility;
-      case ReportStatus.inProgress:
-        return Icons.build;
-      case ReportStatus.resolved:
-        return Icons.check_circle;
-      case ReportStatus.rejected:
-        return Icons.cancel;
-      case ReportStatus.archived:
-        return Icons.archive;
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'Alumbrado Público':
+        return Colors.amber;
+      case 'Basura':
+        return Colors.brown;
+      case 'Calles y Veredas':
+        return Colors.grey;
+      case 'Seguridad':
+        return Colors.red;
+      case 'Áreas Verdes':
+        return AppTheme.primaryColor;
+      default:
+        return Colors.blue;
+    }
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Alumbrado Público':
+        return Icons.lightbulb;
+      case 'Basura':
+        return Icons.delete;
+      case 'Calles y Veredas':
+        return Icons.directions_walk;
+      case 'Seguridad':
+        return Icons.security;
+      case 'Áreas Verdes':
+        return Icons.park;
+      default:
+        return Icons.help;
     }
   }
 
@@ -842,6 +898,9 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
       case 'share':
         _shareReport(report);
         break;
+      case 'directions':
+        _openInMaps(report);
+        break;
       case 'refresh':
         _loadReportDetails();
         break;
@@ -862,27 +921,24 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
   }
 
   void _shareReport(ReportEntity report) {
-    // Implementar funcionalidad de compartir
-    // Por ejemplo, copiar enlace al portapapeles
+    // Implementar sharing (copiar al portapapeles, share sheet, etc.)
+    final shareText = 'Denuncia FROGIO: ${report.title}\nID: ${report.id}\nEstado: ${report.status}';
+    // Share.share(shareText); // Requiere dependencia share_plus
   }
 
-  void _openMediaViewer(List<MediaAttachment> attachments, int initialIndex) {
+  void _openInMaps(ReportEntity report) {
+    final url = 'https://www.google.com/maps/search/?api=1&query=${report.location.latitude},${report.location.longitude}';
+    launchUrl(Uri.parse(url));
+  }
+
+  void _openPhotoViewer(List<String> imageUrls, int initialIndex) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => MediaViewerScreen(
-          attachments: attachments,
+        builder: (context) => PhotoViewerScreen(
+          imageUrls: imageUrls,
           initialIndex: initialIndex,
         ),
         fullscreenDialog: true,
-      ),
-    );
-  }
-
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.successColor,
       ),
     );
   }
@@ -897,14 +953,14 @@ class _ReportDetailScreenState extends State<ReportDetailScreen>
   }
 }
 
-// Screen para visualizar multimedia en pantalla completa
-class MediaViewerScreen extends StatelessWidget {
-  final List<MediaAttachment> attachments;
+// Screen para visualizar fotos en pantalla completa
+class PhotoViewerScreen extends StatelessWidget {
+  final List<String> imageUrls;
   final int initialIndex;
 
-  const MediaViewerScreen({
+  const PhotoViewerScreen({
     Key? key,
-    required this.attachments,
+    required this.imageUrls,
     required this.initialIndex,
   }) : super(key: key);
 
@@ -916,44 +972,19 @@ class MediaViewerScreen extends StatelessWidget {
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
-          '${initialIndex + 1} de ${attachments.length}',
+          '${initialIndex + 1} de ${imageUrls.length}',
           style: const TextStyle(color: Colors.white),
         ),
       ),
       body: PhotoViewGallery.builder(
-        itemCount: attachments.length,
+        itemCount: imageUrls.length,
         pageController: PageController(initialPage: initialIndex),
         builder: (context, index) {
-          final attachment = attachments[index];
-          
-          if (attachment.type == MediaType.image) {
-            return PhotoViewGalleryPageOptions(
-              imageProvider: CachedNetworkImageProvider(attachment.url),
-              minScale: PhotoViewComputedScale.contained,
-              maxScale: PhotoViewComputedScale.covered * 2,
-            );
-          } else {
-            // Para videos, mostrar placeholder
-            return PhotoViewGalleryPageOptions.customChild(
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.videocam,
-                      color: Colors.white,
-                      size: 64,
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Video no disponible en vista previa',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
+          return PhotoViewGalleryPageOptions(
+            imageProvider: CachedNetworkImageProvider(imageUrls[index]),
+            minScale: PhotoViewComputedScale.contained,
+            maxScale: PhotoViewComputedScale.covered * 2,
+          );
         },
         scrollPhysics: const BouncingScrollPhysics(),
         backgroundDecoration: const BoxDecoration(color: Colors.black),

@@ -23,6 +23,8 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     on<LoadReportDetailsEvent>(_onLoadReportDetails);
     on<CreateReportEvent>(_onCreateReport);
     on<FilterReportsEvent>(_onFilterReports);
+    on<UpdateReportStatusEvent>(_onUpdateReportStatus);
+    on<AddReportResponseEvent>(_onAddReportResponse);
   }
 
   Future<void> _onLoadReports(
@@ -108,6 +110,64 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
         filteredReports: filteredReports,
         currentFilter: event.filter,
       ));
+    }
+  }
+
+  Future<void> _onUpdateReportStatus(
+    UpdateReportStatusEvent event,
+    Emitter<ReportState> emit,
+  ) async {
+    try {
+      // Simular actualización de estado en Firebase
+      await Future.delayed(const Duration(seconds: 1));
+      
+      // En implementación real:
+      // await reportRepository.updateReportStatus(
+      //   reportId: event.reportId,
+      //   status: event.status,
+      //   comment: event.comment,
+      //   userId: event.userId,
+      // );
+      
+      // Crear nuevo item de historial
+      final historyItem = HistoryLogItem(
+        timestamp: DateTime.now(),
+        status: event.status,
+        comment: event.comment,
+        userId: event.userId,
+      );
+      
+      // Recargar detalles del reporte
+      add(LoadReportDetailsEvent(reportId: event.reportId));
+      
+    } catch (e) {
+      emit(ReportError(message: 'Error al actualizar estado: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onAddReportResponse(
+    AddReportResponseEvent event,
+    Emitter<ReportState> emit,
+  ) async {
+    try {
+      // Simular agregar respuesta
+      await Future.delayed(const Duration(seconds: 1));
+      
+      // En implementación real:
+      // await reportRepository.addReportResponse(
+      //   reportId: event.reportId,
+      //   responderId: event.responderId,
+      //   responderName: event.responderName,
+      //   message: event.message,
+      //   attachments: event.attachments,
+      //   isPublic: event.isPublic,
+      // );
+      
+      // Recargar detalles del reporte
+      add(LoadReportDetailsEvent(reportId: event.reportId));
+      
+    } catch (e) {
+      emit(ReportError(message: 'Error al agregar respuesta: ${e.toString()}'));
     }
   }
 
