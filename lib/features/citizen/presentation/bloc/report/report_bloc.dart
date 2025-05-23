@@ -130,12 +130,6 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
       // );
       
       // Crear nuevo item de historial
-      final historyItem = HistoryLogItem(
-        timestamp: DateTime.now(),
-        status: event.status,
-        comment: event.comment,
-        userId: event.userId,
-      );
       
       // Recargar detalles del reporte
       add(LoadReportDetailsEvent(reportId: event.reportId));

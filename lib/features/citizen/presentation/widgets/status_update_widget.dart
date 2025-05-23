@@ -1,4 +1,5 @@
 // lib/features/citizen/presentation/widgets/status_update_widget.dart
+// CÓDIGO COMPLETO CORREGIDO - Todos los errores solucionados
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -14,10 +15,10 @@ class StatusUpdateWidget extends StatefulWidget {
   final VoidCallback? onStatusUpdated;
 
   const StatusUpdateWidget({
-    Key? key,
+    super.key, // Corrección: usar super parámetro
     required this.report,
     this.onStatusUpdated,
-  }) : super(key: key);
+  });
 
   @override
   State<StatusUpdateWidget> createState() => _StatusUpdateWidgetState();
@@ -137,7 +138,7 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(widget.report.status).withOpacity(0.2),
+                            color: _getStatusColor(widget.report.status).withValues(alpha: 0.2), // Corrección: withOpacity -> withValues
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -163,9 +164,8 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
               ),
               const SizedBox(height: 12),
               
-              ...(_statusOptions.keys)
-                  .map((status) => _buildStatusOption(status))
-                  .toList(),
+              // Corrección: remover .toList() innecesario en spread
+              ..._statusOptions.keys.map((status) => _buildStatusOption(status)),
               
               const SizedBox(height: 20),
               
@@ -190,10 +190,10 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(_selectedStatus).withOpacity(0.1),
+                    color: _getStatusColor(_selectedStatus).withValues(alpha: 0.1), // Corrección: withOpacity -> withValues
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: _getStatusColor(_selectedStatus).withOpacity(0.3),
+                      color: _getStatusColor(_selectedStatus).withValues(alpha: 0.3), // Corrección: withOpacity -> withValues
                     ),
                   ),
                   child: Row(
@@ -228,12 +228,11 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
           BlocBuilder<ReportBloc, ReportState>(
             builder: (context, state) {
               final isLoading = state is ReportLoading;
+              
               return CustomButton(
                 text: 'Actualizar',
                 isLoading: isLoading,
-                onPressed: isLoading || _selectedStatus == widget.report.status
-                    ? null
-                    : _updateStatus,
+                onPressed: _updateStatus, // Corrección: siempre pasar la función
               );
             },
           ),
@@ -258,7 +257,7 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected 
-              ? info.color.withOpacity(0.1)
+              ? info.color.withValues(alpha: 0.1) // Corrección: withOpacity -> withValues
               : isCurrent
                   ? Colors.grey.shade100
                   : Colors.transparent,
@@ -349,6 +348,17 @@ class _StatusUpdateWidgetState extends State<StatusUpdateWidget> {
   }
 
   void _updateStatus() {
+    // Validar que se puede actualizar
+    if (_selectedStatus == widget.report.status) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecciona un estado diferente al actual'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      return;
+    }
+    
     // En implementación real, necesitarías obtener el userId del AuthBloc
     const currentUserId = 'current_user_id';
     

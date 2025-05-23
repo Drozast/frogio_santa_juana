@@ -1,4 +1,5 @@
 // lib/features/citizen/presentation/widgets/response_input_widget.dart
+// CÓDIGO COMPLETO CORREGIDO - Todos los errores solucionados
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -16,10 +17,10 @@ class ResponseInputWidget extends StatefulWidget {
   final VoidCallback? onResponseAdded;
 
   const ResponseInputWidget({
-    Key? key,
+    super.key,
     required this.reportId,
     this.onResponseAdded,
-  }) : super(key: key);
+  });
 
   @override
   State<ResponseInputWidget> createState() => _ResponseInputWidgetState();
@@ -30,7 +31,7 @@ class _ResponseInputWidgetState extends State<ResponseInputWidget> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
   
-  List<File> _attachments = [];
+  final List<File> _attachments = [];
   bool _isPublic = true;
   bool _isExpanded = false;
 
@@ -67,7 +68,7 @@ class _ResponseInputWidgetState extends State<ResponseInputWidget> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
+              color: Colors.grey.withValues(alpha: 0.2), // Corrección: withOpacity -> withValues
               blurRadius: 4,
               offset: const Offset(0, -2),
             ),
@@ -219,7 +220,7 @@ class _ResponseInputWidgetState extends State<ResponseInputWidget> {
                             return CustomButton(
                               text: 'Enviar Respuesta',
                               isLoading: isLoading,
-                              onPressed: isLoading ? null : _submitResponse,
+                              onPressed: _submitResponse, // Corrección: directamente la función
                             );
                           },
                         ),
@@ -275,7 +276,7 @@ class _ResponseInputWidgetState extends State<ResponseInputWidget> {
           _attachments.removeAt(index);
         });
       },
-      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1), // Corrección: withOpacity -> withValues
     );
   }
 
@@ -292,12 +293,15 @@ class _ResponseInputWidgetState extends State<ResponseInputWidget> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al seleccionar imagen: ${e.toString()}'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
+      // Corrección: Verificar mounted antes de usar BuildContext
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al seleccionar imagen: ${e.toString()}'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     }
   }
 

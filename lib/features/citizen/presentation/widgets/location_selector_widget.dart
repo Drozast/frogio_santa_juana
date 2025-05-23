@@ -1,4 +1,3 @@
-// lib/features/citizen/presentation/widgets/location_selector_widget.dart
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -14,10 +13,10 @@ class LocationSelectorWidget extends StatefulWidget {
   final Function(LocationData) onLocationSelected;
 
   const LocationSelectorWidget({
-    Key? key,
+    super.key,
     this.initialLocation,
     required this.onLocationSelected,
-  }) : super(key: key);
+  });
 
   @override
   State<LocationSelectorWidget> createState() => _LocationSelectorWidgetState();
@@ -28,11 +27,10 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
   late TabController _tabController;
   LocationData? _selectedLocation;
   GoogleMapController? _mapController;
-  
+
   bool _isLoadingGPS = false;
-  bool _isLoadingMap = false;
   String? _errorMessage;
-  
+
   final Set<Marker> _markers = {};
   late CameraPosition _initialCameraPosition;
 
@@ -41,13 +39,12 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _selectedLocation = widget.initialLocation;
-    
-    // Santa Juana, Chile coordinates as default
+
     _initialCameraPosition = const CameraPosition(
       target: LatLng(-37.1716, -72.9333),
       zoom: 14,
     );
-    
+
     if (_selectedLocation != null) {
       _updateMapMarker(_selectedLocation!);
     }
@@ -67,11 +64,10 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primaryColor.withAlpha((0.1 * 255).toInt()),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -95,9 +91,11 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
                 ),
                 if (_selectedLocation != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppTheme.successColor.withOpacity(0.2),
+                      color:
+                          AppTheme.successColor.withAlpha((0.2 * 255).toInt()),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
@@ -112,14 +110,8 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
               ],
             ),
           ),
-          
-          // Current selection display
           if (_selectedLocation != null) _buildCurrentSelection(),
-          
-          // Error message
           if (_errorMessage != null) _buildErrorMessage(),
-          
-          // Tab bar
           TabBar(
             controller: _tabController,
             labelColor: AppTheme.primaryColor,
@@ -131,8 +123,6 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
               Tab(icon: Icon(Icons.edit_location), text: 'Manual'),
             ],
           ),
-          
-          // Tab content
           SizedBox(
             height: 300,
             child: TabBarView(
@@ -154,21 +144,18 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.successColor.withOpacity(0.05),
-        border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
+        color: AppTheme.successColor.withAlpha((0.05 * 255).toInt()),
+        border: Border.all(
+            color: AppTheme.successColor.withAlpha((0.3 * 255).toInt())),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              Icon(
-                Icons.check_circle,
-                color: AppTheme.successColor,
-                size: 16,
-              ),
-              const SizedBox(width: 8),
-              const Text(
+              Icon(Icons.check_circle, color: AppTheme.successColor, size: 16),
+              SizedBox(width: 8),
+              Text(
                 'Ubicación seleccionada:',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -185,10 +172,7 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
           if (location.latitude != 0 && location.longitude != 0)
             Text(
               'Coordenadas: ${location.latitude.toStringAsFixed(6)}, ${location.longitude.toStringAsFixed(6)}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
         ],
       ),
@@ -199,33 +183,23 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.errorColor.withOpacity(0.05),
-        border: Border.all(color: AppTheme.errorColor.withOpacity(0.3)),
+        color: AppTheme.errorColor.withAlpha((0.05 * 255).toInt()),
+        border: Border.all(
+            color: AppTheme.errorColor.withAlpha((0.3 * 255).toInt())),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.error_outline,
-            color: AppTheme.errorColor,
-            size: 16,
-          ),
+          const Icon(Icons.error_outline, color: AppTheme.errorColor, size: 16),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               _errorMessage!,
-              style: TextStyle(
-                color: AppTheme.errorColor,
-                fontSize: 14,
-              ),
+              style: const TextStyle(color: AppTheme.errorColor, fontSize: 14),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.close, size: 16),
-            onPressed: () {
-              setState(() {
-                _errorMessage = null;
-              });
-            },
+            onPressed: () => setState(() => _errorMessage = null),
           ),
         ],
       ),
@@ -250,10 +224,7 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
             _selectedLocation?.source == LocationSource.gps
                 ? 'Ubicación GPS obtenida'
                 : 'Obtener ubicación actual',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -268,7 +239,11 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
               text: 'Obtener Ubicación GPS',
               icon: Icons.gps_fixed,
               isLoading: _isLoadingGPS,
-              onPressed: _isLoadingGPS ? null : _getCurrentLocation,
+              onPressed: () {
+                if (!_isLoadingGPS) {
+                  _getCurrentLocation();
+                }
+              },
             ),
           ),
         ],
@@ -282,14 +257,15 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
         Expanded(
           child: GoogleMap(
             initialCameraPosition: _initialCameraPosition,
-            onMapCreated: (GoogleMapController controller) {
+            onMapCreated: (controller) {
               _mapController = controller;
-              if (_selectedLocation != null && 
-                  _selectedLocation!.latitude != 0 && 
+              if (_selectedLocation != null &&
+                  _selectedLocation!.latitude != 0 &&
                   _selectedLocation!.longitude != 0) {
                 _mapController!.animateCamera(
                   CameraUpdate.newLatLng(
-                    LatLng(_selectedLocation!.latitude, _selectedLocation!.longitude),
+                    LatLng(_selectedLocation!.latitude,
+                        _selectedLocation!.longitude),
                   ),
                 );
               }
@@ -347,7 +323,6 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
     });
 
     try {
-      // Check permissions
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         throw Exception('Los servicios de ubicación están desactivados');
@@ -362,29 +337,25 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
       }
 
       if (permission == LocationPermission.deniedForever) {
-        throw Exception('Permiso de ubicación denegado permanentemente. Ve a configuración para habilitarlo.');
+        throw Exception(
+            'Permiso de ubicación denegado permanentemente. Ve a configuración para habilitarlo.');
       }
 
-      // Get position
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 10),
       );
 
-      // Get address
       String? address;
       try {
         final placemarks = await placemarkFromCoordinates(
-          position.latitude,
-          position.longitude,
-        );
+            position.latitude, position.longitude);
         if (placemarks.isNotEmpty) {
           final place = placemarks.first;
-          address = '${place.street ?? ''}, ${place.locality ?? ''}, ${place.country ?? ''}';
+          address =
+              '${place.street ?? ''}, ${place.locality ?? ''}, ${place.country ?? ''}';
         }
-      } catch (e) {
-        // Ignore geocoding errors
-      }
+      } catch (_) {}
 
       final location = LocationData(
         latitude: position.latitude,
@@ -395,59 +366,34 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
 
       _updateSelectedLocation(location);
       _updateMapMarker(location);
-
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      setState(() => _errorMessage = e.toString());
     } finally {
-      setState(() {
-        _isLoadingGPS = false;
-      });
+      setState(() => _isLoadingGPS = false);
     }
   }
 
   Future<void> _onMapTapped(LatLng position) async {
-    setState(() {
-      _isLoadingMap = true;
-      _errorMessage = null;
-    });
-
+    String? address;
     try {
-      // Get address from coordinates
-      String? address;
-      try {
-        final placemarks = await placemarkFromCoordinates(
-          position.latitude,
-          position.longitude,
-        );
-        if (placemarks.isNotEmpty) {
-          final place = placemarks.first;
-          address = '${place.street ?? ''}, ${place.locality ?? ''}, ${place.country ?? ''}';
-        }
-      } catch (e) {
-        // Ignore geocoding errors
+      final placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        address =
+            '${place.street ?? ''}, ${place.locality ?? ''}, ${place.country ?? ''}';
       }
+    } catch (_) {}
 
-      final location = LocationData(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        address: address ?? 'Ubicación seleccionada en mapa',
-        source: LocationSource.map,
-      );
+    final location = LocationData(
+      latitude: position.latitude,
+      longitude: position.longitude,
+      address: address ?? 'Ubicación seleccionada en mapa',
+      source: LocationSource.map,
+    );
 
-      _updateSelectedLocation(location);
-      _updateMapMarker(location);
-
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Error al obtener información de ubicación';
-      });
-    } finally {
-      setState(() {
-        _isLoadingMap = false;
-      });
-    }
+    _updateSelectedLocation(location);
+    _updateMapMarker(location);
   }
 
   void _updateSelectedLocation(LocationData location) {
@@ -473,11 +419,8 @@ class _LocationSelectorWidgetState extends State<LocationSelectorWidget>
         );
       });
 
-      // Move camera to location
       _mapController?.animateCamera(
-        CameraUpdate.newLatLng(
-          LatLng(location.latitude, location.longitude),
-        ),
+        CameraUpdate.newLatLng(LatLng(location.latitude, location.longitude)),
       );
     }
   }

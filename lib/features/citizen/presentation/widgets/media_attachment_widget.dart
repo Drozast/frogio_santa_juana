@@ -18,13 +18,13 @@ class MediaAttachmentWidget extends StatefulWidget {
   final bool allowVideos;
 
   const MediaAttachmentWidget({
-    Key? key,
+    super.key,
     this.initialFiles = const [],
     required this.onFilesChanged,
     this.maxFiles = 5,
     this.maxFileSizeMB = 50,
     this.allowVideos = true,
-  }) : super(key: key);
+  });
 
   @override
   State<MediaAttachmentWidget> createState() => _MediaAttachmentWidgetState();
@@ -52,7 +52,7 @@ class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -77,7 +77,7 @@ class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -318,7 +318,7 @@ class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300, style: BorderStyle.dashed),
+        border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
       ),
       child: const Column(
         children: [
@@ -401,7 +401,7 @@ class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
                       ],
                     ),
                   ))
-              .toList(),
+              ,
         ],
       ),
     );
@@ -527,7 +527,7 @@ class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
 class MediaPreviewScreen extends StatelessWidget {
   final File file;
 
-  const MediaPreviewScreen({Key? key, required this.file}) : super(key: key);
+  const MediaPreviewScreen({super.key, required this.file});
 
   @override
   Widget build(BuildContext context) {

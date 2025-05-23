@@ -19,9 +19,9 @@ class EditProfileScreen extends StatefulWidget {
   final UserEntity user;
 
   const EditProfileScreen({
-    Key? key,
+    super.key,
     required this.user,
-  }) : super(key: key);
+  });
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -172,7 +172,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       children: [
         CircleAvatar(
           radius: 60,
-          backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+          backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
           child: _isUploadingImage
               ? const CircularProgressIndicator()
               : _buildAvatarContent(currentUser),
@@ -223,7 +223,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _buildDefaultAvatar(UserEntity user) {
     return CircleAvatar(
       radius: 60,
-      backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
+      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.2),
       child: Text(
         user.displayName.substring(0, 1).toUpperCase(),
         style: const TextStyle(

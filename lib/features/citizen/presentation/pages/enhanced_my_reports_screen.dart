@@ -194,7 +194,7 @@ class _MyReportsScreenState extends State<MyReportsScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -220,7 +220,7 @@ class _MyReportsScreenState extends State<MyReportsScreen>
                         _reportBloc.add(FilterReportsEvent(filter: filter));
                       }
                     },
-                    selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                    selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
                     checkmarkColor: AppTheme.primaryColor,
                   ),
                 );
@@ -475,7 +475,7 @@ class _MyReportsScreenState extends State<MyReportsScreen>
             return ListTile(
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
-                backgroundColor: _getStatusColor(report.status.name).withOpacity(0.2),
+               backgroundColor: _getStatusColor(report.status.name).withValues(alpha: 0.2),
                 child: Icon(
                   _getStatusIcon(report.status),
                   color: _getStatusColor(report.status.name),
@@ -709,7 +709,7 @@ class _MyReportsScreenState extends State<MyReportsScreen>
       _searchQuery = '';
     });
     _searchController.clear();
-    _reportBloc.add(SearchReportsEvent(query: ''));
+    _reportBloc.add(const SearchReportsEvent(query: ''));
   }
 
   void _handleMenuAction(String action) {

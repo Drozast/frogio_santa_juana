@@ -17,7 +17,7 @@ class MapWidget extends StatefulWidget {
   final MapType mapType;
 
   const MapWidget({
-    Key? key,
+    super.key,
     this.initialLocation,
     this.markers,
     this.polylines,
@@ -27,14 +27,13 @@ class MapWidget extends StatefulWidget {
     this.allowLocationSelection = false,
     this.zoom = 15.0,
     this.mapType = MapType.normal,
-  }) : super(key: key);
+  });
 
   @override
   State<MapWidget> createState() => _MapWidgetState();
 }
 
 class _MapWidgetState extends State<MapWidget> {
-  GoogleMapController? _controller;
   final MapsService _mapsService = MapsService();
   LatLng? _currentLocation;
   Set<Marker> _markers = {};
@@ -173,7 +172,7 @@ class _MapWidgetState extends State<MapWidget> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -188,10 +187,9 @@ class _MapWidgetState extends State<MapWidget> {
   }
 
   void _onMapCreated(GoogleMapController controller) {
-    _controller = controller;
-    _mapsService.setController(controller);
-    widget.onMapCreated?.call(controller);
-  }
+  _mapsService.setController(controller);
+  widget.onMapCreated?.call(controller);
+}
 
   void _onMapTap(LatLng location) {
     if (widget.allowLocationSelection) {
@@ -211,13 +209,15 @@ class _MapWidgetState extends State<MapWidget> {
         _updateMarkers();
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+  ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al obtener ubicación: ${e.toString()}'),
           backgroundColor: AppTheme.errorColor,
         ),
       );
     }
+  }
   }
 
   void _showMapTypeDialog() {

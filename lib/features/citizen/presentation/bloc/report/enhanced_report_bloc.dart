@@ -23,8 +23,8 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
   final WatchReportsByStatus watchReportsByStatus;
 
   StreamSubscription<List<ReportEntity>>? _reportsSubscription;
-  List<File> _currentAttachments = [];
-  LocationData? _currentLocation;
+  final List<File> _currentAttachments = [];
+  LocationData? get currentLocation => _currentLocation; LocationData? _currentLocation;
 
   ReportBloc({
     required this.createReport,
@@ -387,7 +387,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     Emitter<ReportState> emit,
   ) {
     _currentAttachments.clear();
-    emit(AttachmentsUpdated(attachments: []));
+    emit(const AttachmentsUpdated(attachments: []));
   }
 
   void _onSetLocation(

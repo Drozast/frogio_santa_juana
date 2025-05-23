@@ -133,7 +133,7 @@ class _CreateReportScreenState extends State<CreateReportScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -309,7 +309,7 @@ class _CreateReportScreenState extends State<CreateReportScreen>
                       });
                     }
                   },
-                  selectedColor: _getPriorityColor(priority).withOpacity(0.2),
+                  selectedColor: _getPriorityColor(priority).withValues(alpha: 0.2),
                   labelStyle: TextStyle(
                     color: isSelected 
                         ? _getPriorityColor(priority) 
@@ -501,7 +501,7 @@ class _CreateReportScreenState extends State<CreateReportScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -545,19 +545,7 @@ class _CreateReportScreenState extends State<CreateReportScreen>
     }
   }
 
-  void _handleNextStep() {
-    if (_currentStep == 3) {
-      _submitReport();
-    } else {
-      if (_validateCurrentStep()) {
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      }
-    }
-  }
-
+  
   bool _validateCurrentStep() {
     switch (_currentStep) {
       case 0:
@@ -640,7 +628,7 @@ class _CreateReportScreenState extends State<CreateReportScreen>
               width: 150,
               height: 150,
               decoration: BoxDecoration(
-                color: AppTheme.successColor.withOpacity(0.1),
+                color: AppTheme.successColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
