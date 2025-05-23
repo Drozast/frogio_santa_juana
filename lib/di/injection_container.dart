@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:uuid/uuid.dart';
 
 // Core Services
 import '../core/blocs/notification/notification_bloc.dart';
@@ -38,8 +39,47 @@ import '../features/citizen/presentation/bloc/report/report_bloc.dart';
 final sl = GetIt.instance;
 
 Future<void> init() async {
- 
-  // ===== AUTH FEATURE =====
+  // ===== CORE SERVICES =====
+  await _initCoreServices();
+  
+  // ===== FIREBASE INSTANCES =====
+  _initFirebaseServices();
+  
+  // ===== NETWORK =====
+  _initNetworkServices();
+  
+  // ===== FEATURES =====
+  await _initAuthFeature();
+  await _initCitizenFeature();
+  
+  // ===== INITIALIZE SERVICES =====
+  await _initializeServices();
+}
+
+// ===== CORE SERVICES =====
+Future<void> _initCoreServices() async {
+  sl.registerLazySingleton(() => SessionTimeoutService());
+  sl.registerLazySingleton(() => MapsService());
+  sl.registerLazySingleton(() => NotificationService());
+  sl.registerLazySingleton(() => NotificationManager());
+  sl.registerFactory(() => NotificationBloc());
+  sl.registerLazySingleton(() => const Uuid());
+}
+
+// ===== FIREBASE SERVICES =====
+void _initFirebaseServices() {
+  sl.registerLazySingleton(() => FirebaseAuth.instance);
+  sl.registerLazySingleton(() => FirebaseFirestore.instance);
+  sl.registerLazySingleton(() => FirebaseStorage.instance);
+}
+
+// ===== NETWORK SERVICES =====
+void _initNetworkServices() {
+  sl.registerLazySingleton(() => InternetConnectionChecker());
+}
+
+// ===== AUTH FEATURE =====
+Future<void> _initAuthFeature() async {
   // BLoCs
   sl.registerFactory(
     () => AuthBloc(
@@ -80,8 +120,10 @@ Future<void> init() async {
       storage: sl(),
     ),
   );
+}
 
-  // ===== CITIZEN FEATURE =====
+// ===== CITIZEN FEATURE =====
+Future<void> _initCitizenFeature() async {
   // BLoCs
   sl.registerFactory(
     () => ReportBloc(
@@ -108,64 +150,71 @@ Future<void> init() async {
       storage: sl(),
     ),
   );
-
-  // ===== INSPECTOR FEATURE (TODO) =====
-  // sl.registerFactory(() => InspectorBloc(...));
-  // sl.registerLazySingleton(() => CreateInfraction(sl()));
-  // sl.registerLazySingleton(() => GetInfractionsByInspector(sl()));
-  // sl.registerLazySingleton<InfractionRepository>(() => InfractionRepositoryImpl(remoteDataSource: sl()));
-  // sl.registerLazySingleton<InfractionRemoteDataSource>(() => InfractionRemoteDataSourceImpl(...));
-
-  // ===== ADMIN FEATURE (TODO) =====
-  // sl.registerFactory(() => AdminBloc(...));
-  // sl.registerLazySingleton(() => GetAllReports(sl()));
-  // sl.registerLazySingleton(() => AssignReportToInspector(sl()));
-  // sl.registerLazySingleton(() => GetReportStatistics(sl()));
-  // sl.registerLazySingleton<AdminRepository>(() => AdminRepositoryImpl(remoteDataSource: sl()));
-  // sl.registerLazySingleton<AdminRemoteDataSource>(() => AdminRemoteDataSourceImpl(...));
-
-  // ===== VEHICLES FEATURE (TODO) =====
-  // sl.registerFactory(() => VehicleBloc(...));
-  // sl.registerLazySingleton(() => GetVehicles(sl()));
-  // sl.registerLazySingleton(() => StartVehicleUsage(sl()));
-  // sl.registerLazySingleton(() => EndVehicleUsage(sl()));
-  // sl.registerLazySingleton<VehicleRepository>(() => VehicleRepositoryImpl(remoteDataSource: sl()));
-  // sl.registerLazySingleton<VehicleRemoteDataSource>(() => VehicleRemoteDataSourceImpl(...));
-
-  
-  sl.registerLazySingleton(() => SessionTimeoutService());
-  sl.registerLazySingleton(() => MapsService());
-  sl.registerLazySingleton(() => NotificationService());
-  sl.registerLazySingleton(() => NotificationManager());
-
-  
-  sl.registerFactory(() => NotificationBloc());
-
-
-  
-  // Firebase
-  sl.registerLazySingleton(() => FirebaseAuth.instance);
-  sl.registerLazySingleton(() => FirebaseFirestore.instance);
-  sl.registerLazySingleton(() => FirebaseStorage.instance);
-  
-  // Network
-  sl.registerLazySingleton(() => InternetConnectionChecker());
-
- 
-  // Inicializar servicios que lo requieran
-  await _initializeServices();
 }
 
+// ===== SERVICE INITIALIZATION =====
 Future<void> _initializeServices() async {
-  // Inicializar notification service
-  final notificationService = sl<NotificationService>();
-  await notificationService.initialize();
-  
-  // Inicializar notification manager
-  final notificationManager = sl<NotificationManager>();
-  await notificationManager.initialize();
-  
-  // Configurar session timeout
-  final sessionService = sl<SessionTimeoutService>();
-  sessionService.startTimer();
+  try {
+    final notificationService = sl<NotificationService>();
+    await notificationService.initialize();
+    
+    final notificationManager = sl<NotificationManager>();
+    await notificationManager.initialize();
+    
+    final sessionService = sl<SessionTimeoutService>();
+    sessionService.startTimer();
+    
+    print('✅ FROGIO: Services initialized');
+  } catch (e) {
+    print('❌ FROGIO: Error initializing services: $e');
+    rethrow;
+  }
+}
+
+// ===== UTILITY METHODS =====
+Future<void> resetDependencies() async {
+  await sl.reset();
+}
+
+bool validateDependencies() {
+  try {
+    sl<SessionTimeoutService>();
+    sl<MapsService>();
+    sl<NotificationService>();
+    sl<FirebaseAuth>();
+    sl<FirebaseFirestore>();
+    sl<FirebaseStorage>();
+    sl<AuthBloc>();
+    sl<ReportBloc>();
+    return true;
+  } catch (e) {
+    print('❌ FROGIO: Dependency validation failed: $e');
+    return false;
+  }
+}
+
+Map<String, bool> getDependencyInfo() {
+  return {
+    'SessionTimeoutService': sl.isRegistered<SessionTimeoutService>(),
+    'MapsService': sl.isRegistered<MapsService>(),
+    'NotificationService': sl.isRegistered<NotificationService>(),
+    'NotificationManager': sl.isRegistered<NotificationManager>(),
+    'AuthBloc': sl.isRegistered<AuthBloc>(),
+    'ReportBloc': sl.isRegistered<ReportBloc>(),
+    'ProfileBloc': sl.isRegistered<ProfileBloc>(),
+    'NotificationBloc': sl.isRegistered<NotificationBloc>(),
+    'FirebaseAuth': sl.isRegistered<FirebaseAuth>(),
+    'FirebaseFirestore': sl.isRegistered<FirebaseFirestore>(),
+    'FirebaseStorage': sl.isRegistered<FirebaseStorage>(),
+    'InternetConnectionChecker': sl.isRegistered<InternetConnectionChecker>(),
+    'Uuid': sl.isRegistered<Uuid>(),
+  };
+}
+
+void printDependencies() {
+  final info = getDependencyInfo();
+  print('🔧 FROGIO Dependencies Status:');
+  info.forEach((key, value) {
+    print('  ${value ? '✅' : '❌'} $key');
+  });
 }
