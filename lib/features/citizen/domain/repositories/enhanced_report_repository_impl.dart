@@ -2,6 +2,7 @@
 import 'dart:io';
 
 import 'package:dartz/dartz.dart';
+import 'package:frogio_santa_juana/features/citizen/data/datasources/enhanced_report_remote_data_source.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/enhanced_report_entity.dart';

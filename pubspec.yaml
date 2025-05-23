@@ -25,6 +25,7 @@ dependencies:
   
   # Dependency Injection
   get_it: ^7.6.7
+  flutter_local_notifications: ^16.0.0 
   
   # Utils
   dartz: ^0.10.1

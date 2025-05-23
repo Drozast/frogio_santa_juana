@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -180,13 +179,6 @@ class NotificationService {
       log('Sending token to server for user $userId with role $userRole');
       
       // Ejemplo de estructura de datos:
-      final tokenData = {
-        'userId': userId,
-        'fcmToken': _fcmToken,
-        'role': userRole,
-        'platform': Platform.isIOS ? 'ios' : 'android',
-        'timestamp': DateTime.now().toIso8601String(),
-      };
       
       // await apiService.saveUserToken(tokenData);
       
@@ -224,7 +216,7 @@ class NotificationService {
 
     const iosDetails = DarwinNotificationDetails();
     
-    const notificationDetails = NotificationDetails(
+    final notificationDetails = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );

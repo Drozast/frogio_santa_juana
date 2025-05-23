@@ -51,7 +51,7 @@ class ServiceLocator {
   }
 
   // Verificar estado
-  static bool get isReady => _getIt.allReady();
+  static Future<void> get isReady => _getIt.allReady();
 
   // Esperar a que todos los servicios estén listos
   static Future<void> allReady() => _getIt.allReady();
