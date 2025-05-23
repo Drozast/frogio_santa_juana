@@ -368,7 +368,7 @@ class _EnhancedResponseInputWidgetState extends State<EnhancedResponseInputWidge
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade300, style: BorderStyle.dashed),
+              border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
             ),
             child: const Column(
               children: [

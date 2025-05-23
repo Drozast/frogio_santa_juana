@@ -17,7 +17,7 @@ class ReportDetailScreen extends StatefulWidget {
 
   const ReportDetailScreen({
     super.key,
-    required this.reportId,
+    required this.reportId, String? currentUserRole,
   });
 
   @override

@@ -526,7 +526,7 @@ class _CreateReportScreenState extends State<CreateReportScreen>
                 return CustomButton(
                   text: _currentStep == 3 ? 'Enviar Denuncia' : 'Siguiente',
                   isLoading: isLoading,
-                  onPressed: isLoading ? null : _handleNextStep,
+                  onPressed: isLoading ? () {} : _submitReport,
                 );
               },
             ),

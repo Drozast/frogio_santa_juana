@@ -14,12 +14,12 @@ class LocationPickerWidget extends StatefulWidget {
   final String confirmButtonText;
 
   const LocationPickerWidget({
-    Key? key,
+    super.key,
     this.initialLocation,
     required this.onLocationSelected,
     this.title = 'Seleccionar ubicación',
     this.confirmButtonText = 'Confirmar ubicación',
-  }) : super(key: key);
+  });
 
   @override
   State<LocationPickerWidget> createState() => _LocationPickerWidgetState();
@@ -76,6 +76,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
+            // ignore: deprecated_member_use
             color: Colors.grey.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
@@ -85,11 +86,11 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.info_outline, color: AppTheme.primaryColor),
-              const SizedBox(width: 8),
-              const Text(
+              Icon(Icons.info_outline, color: AppTheme.primaryColor),
+              SizedBox(width: 8),
+              Text(
                 'Toca en el mapa para seleccionar ubicación',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
@@ -108,11 +109,11 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(Icons.location_on, color: AppTheme.primaryColor, size: 16),
-                      const SizedBox(width: 8),
-                      const Text(
+                      Icon(Icons.location_on, color: AppTheme.primaryColor, size: 16),
+                      SizedBox(width: 8),
+                      Text(
                         'Ubicación seleccionada:',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
@@ -152,7 +153,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300, style: BorderStyle.dashed),
+                border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
               ),
               child: const Row(
                 children: [
@@ -209,7 +210,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
             width: double.infinity,
             child: CustomButton(
               text: widget.confirmButtonText,
-              onPressed: _selectedLocation != null ? _confirmLocation : null,
+              onPressed: _selectedLocation != null ? _confirmLocation : () {},
             ),
           ),
         ],

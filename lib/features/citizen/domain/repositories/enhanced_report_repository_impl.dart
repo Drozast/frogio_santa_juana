@@ -7,7 +7,6 @@ import 'package:frogio_santa_juana/features/citizen/data/datasources/enhanced_re
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/enhanced_report_entity.dart';
 import '../../domain/repositories/enhanced_report_repository.dart';
-import '../datasources/enhanced_report_remote_data_source.dart';
 
 class ReportRepositoryImpl implements ReportRepository {
   final ReportRemoteDataSource remoteDataSource;

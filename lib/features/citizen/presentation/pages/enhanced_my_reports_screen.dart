@@ -1,6 +1,7 @@
 // lib/features/citizen/presentation/pages/enhanced_my_reports_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frogio_santa_juana/features/citizen/presentation/pages/report_detail_screen.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -11,7 +12,6 @@ import '../bloc/report/enhanced_report_event.dart';
 import '../bloc/report/enhanced_report_state.dart';
 import '../widgets/enhanced_report_list_item.dart';
 import 'enhanced_create_report_screen.dart';
-import 'enhanced_report_detail_screen.dart';
 
 class MyReportsScreen extends StatefulWidget {
   final String userId;
