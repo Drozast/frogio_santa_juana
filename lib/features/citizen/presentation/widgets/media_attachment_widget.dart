@@ -1,19 +1,14 @@
 // lib/features/citizen/presentation/widgets/media_attachment_widget.dart
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
-import 'package:video_player/video_player.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../domain/entities/enhanced_report_entity.dart';
-import '../bloc/report/enhanced_report_bloc.dart';
-import '../bloc/report/enhanced_report_event.dart';
-import '../bloc/report/enhanced_report_state.dart';
 
 class MediaAttachmentWidget extends StatefulWidget {
   final List<File> initialFiles;
@@ -38,6 +33,7 @@ class MediaAttachmentWidget extends StatefulWidget {
 class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
   final ImagePicker _picker = ImagePicker();
   List<File> _attachedFiles = [];
+  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -47,176 +43,146 @@ class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ReportBloc, ReportState>(
-      listener: (context, state) {
-        if (state is AttachmentsUpdated) {
-          setState(() {
-            _attachedFiles = List.from(state.attachments);
-          });
-          widget.onFilesChanged(_attachedFiles);
-        }
-      },
-      child: Card(
-        elevation: 2,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.attach_file,
-                    color: AppTheme.primaryColor,
-                  ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Fotos y Videos (Opcional)',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${_attachedFiles.length}/${widget.maxFiles}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  ),
-                ],
+    return Card(
+      elevation: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
               ),
             ),
-            
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Action buttons
-                  if (_attachedFiles.length < widget.maxFiles) ...[
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.attach_file,
+                  color: AppTheme.primaryColor,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Fotos y Videos (Opcional)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${_attachedFiles.length}/${widget.maxFiles}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Action buttons
+                if (_attachedFiles.length < widget.maxFiles && !_isProcessing) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CustomButton(
+                          text: 'Cámara',
+                          icon: Icons.camera_alt,
+                          onPressed: () => _pickMedia(ImageSource.camera, MediaType.image),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: CustomButton(
+                          text: 'Galería',
+                          icon: Icons.photo_library,
+                          isOutlined: true,
+                          onPressed: () => _pickMedia(ImageSource.gallery, MediaType.image),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (widget.allowVideos) ...[
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
                           child: CustomButton(
-                            text: 'Cámara',
-                            icon: Icons.camera_alt,
-                            onPressed: () => _pickMedia(ImageSource.camera, MediaType.image),
+                            text: 'Video',
+                            icon: Icons.videocam,
+                            isOutlined: true,
+                            onPressed: () => _pickMedia(ImageSource.camera, MediaType.video),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: CustomButton(
-                            text: 'Galería',
-                            icon: Icons.photo_library,
+                            text: 'Video Galería',
+                            icon: Icons.video_library,
                             isOutlined: true,
-                            onPressed: () => _pickMedia(ImageSource.gallery, MediaType.image),
+                            onPressed: () => _pickMedia(ImageSource.gallery, MediaType.video),
                           ),
                         ),
                       ],
                     ),
-                    if (widget.allowVideos) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: CustomButton(
-                              text: 'Video',
-                              icon: Icons.videocam,
-                              isOutlined: true,
-                              onPressed: () => _pickMedia(ImageSource.camera, MediaType.video),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: CustomButton(
-                              text: 'Video Galería',
-                              icon: Icons.video_library,
-                              isOutlined: true,
-                              onPressed: () => _pickMedia(ImageSource.gallery, MediaType.video),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 16),
                   ],
-                  
-                  // File list
-                  if (_attachedFiles.isNotEmpty) ...[
-                    const Text(
-                      'Archivos adjuntos:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    ...List.generate(_attachedFiles.length, (index) {
-                      return _buildFileItem(_attachedFiles[index], index);
-                    }),
-                  ] else ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
-                      ),
-                      child: const Column(
-                        children: [
-                          Icon(
-                            Icons.photo_camera,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'No hay archivos adjuntos',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Agrega fotos o videos para proporcionar evidencia',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  
-                  // Guidelines
                   const SizedBox(height: 16),
-                  _buildGuidelines(),
                 ],
-              ),
+                
+                // Processing indicator
+                if (_isProcessing) ...[
+                  const LinearProgressIndicator(),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Procesando archivo...',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                
+                // File list
+                if (_attachedFiles.isNotEmpty) ...[
+                  const Text(
+                    'Archivos adjuntos:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...List.generate(_attachedFiles.length, (index) {
+                    return _buildFileItem(_attachedFiles[index], index);
+                  }),
+                ] else if (!_isProcessing) ...[
+                  _buildEmptyState(),
+                ],
+                
+                // Guidelines
+                const SizedBox(height: 16),
+                _buildGuidelines(),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -345,6 +311,41 @@ class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
     );
   }
 
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300, style: BorderStyle.dashed),
+      ),
+      child: const Column(
+        children: [
+          Icon(
+            Icons.photo_camera,
+            size: 48,
+            color: Colors.grey,
+          ),
+          SizedBox(height: 8),
+          Text(
+            'No hay archivos adjuntos',
+            style: TextStyle(color: Colors.grey),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Agrega fotos o videos para proporcionar evidencia',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildGuidelines() {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -407,6 +408,15 @@ class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
   }
 
   Future<void> _pickMedia(ImageSource source, MediaType type) async {
+    if (_attachedFiles.length >= widget.maxFiles) {
+      _showError('Máximo ${widget.maxFiles} archivos permitidos');
+      return;
+    }
+
+    setState(() {
+      _isProcessing = true;
+    });
+
     try {
       XFile? pickedFile;
       
@@ -423,7 +433,7 @@ class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
       }
 
       if (pickedFile != null) {
-        final file = File(pickedFile.path);
+        File file = File(pickedFile.path);
         
         // Verificar tamaño
         final fileSize = await file.length();
@@ -434,15 +444,52 @@ class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
           return;
         }
         
-        context.read<ReportBloc>().add(AddAttachmentEvent(file: file, type: type));
+        // Comprimir si es imagen
+        if (type == MediaType.image) {
+          file = await _compressImage(file);
+        }
+        
+        setState(() {
+          _attachedFiles.add(file);
+        });
+        
+        widget.onFilesChanged(_attachedFiles);
       }
     } catch (e) {
       _showError('Error al seleccionar archivo: ${e.toString()}');
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
+    }
+  }
+
+  Future<File> _compressImage(File file) async {
+    try {
+      final dir = path.dirname(file.path);
+      final ext = path.extension(file.path);
+      final fileName = path.basenameWithoutExtension(file.path);
+      final targetPath = path.join(dir, '${fileName}_compressed$ext');
+
+      final result = await FlutterImageCompress.compressAndGetFile(
+        file.absolute.path,
+        targetPath,
+        quality: 70,
+        minWidth: 1024,
+        minHeight: 1024,
+      );
+
+      return result != null ? File(result.path) : file;
+    } catch (e) {
+      return file; // Return original if compression fails
     }
   }
 
   void _removeFile(int index) {
-    context.read<ReportBloc>().add(RemoveAttachmentEvent(index: index));
+    setState(() {
+      _attachedFiles.removeAt(index);
+    });
+    widget.onFilesChanged(_attachedFiles);
   }
 
   void _previewFile(File file) {
@@ -477,52 +524,27 @@ class _MediaAttachmentWidgetState extends State<MediaAttachmentWidget> {
 }
 
 // Screen para previsualizar archivos
-class MediaPreviewScreen extends StatefulWidget {
+class MediaPreviewScreen extends StatelessWidget {
   final File file;
 
   const MediaPreviewScreen({Key? key, required this.file}) : super(key: key);
 
   @override
-  State<MediaPreviewScreen> createState() => _MediaPreviewScreenState();
-}
-
-class _MediaPreviewScreenState extends State<MediaPreviewScreen> {
-  VideoPlayerController? _videoController;
-  bool _isVideo = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _isVideo = _isVideoFile(widget.file.path);
-    
-    if (_isVideo && !kIsWeb) {
-      _videoController = VideoPlayerController.file(widget.file);
-      _videoController!.initialize().then((_) {
-        setState(() {});
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _videoController?.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final isVideo = _isVideoFile(file.path);
+    
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
-          path.basename(widget.file.path),
+          path.basename(file.path),
           style: const TextStyle(color: Colors.white),
         ),
       ),
       body: Center(
-        child: _isVideo
+        child: isVideo
             ? _buildVideoPlayer()
             : _buildImageViewer(),
       ),
@@ -532,56 +554,34 @@ class _MediaPreviewScreenState extends State<MediaPreviewScreen> {
   Widget _buildImageViewer() {
     return InteractiveViewer(
       child: Image.file(
-        widget.file,
+        file,
         fit: BoxFit.contain,
       ),
     );
   }
 
   Widget _buildVideoPlayer() {
-    if (kIsWeb) {
-      return const Center(
-        child: Text(
-          'Vista previa de video no disponible en web',
-          style: TextStyle(color: Colors.white),
-        ),
-      );
-    }
-
-    if (_videoController == null || !_videoController!.value.isInitialized) {
-      return const CircularProgressIndicator();
-    }
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        AspectRatio(
-          aspectRatio: _videoController!.value.aspectRatio,
-          child: VideoPlayer(_videoController!),
-        ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              icon: Icon(
-                _videoController!.value.isPlaying
-                    ? Icons.pause
-                    : Icons.play_arrow,
-                color: Colors.white,
-                size: 32,
-              ),
-              onPressed: () {
-                setState(() {
-                  _videoController!.value.isPlaying
-                      ? _videoController!.pause()
-                      : _videoController!.play();
-                });
-              },
-            ),
-          ],
-        ),
-      ],
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.videocam,
+            color: Colors.white,
+            size: 64,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Vista previa de video',
+            style: TextStyle(color: Colors.white),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'El video se reproducirá al enviar la denuncia',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
     );
   }
 

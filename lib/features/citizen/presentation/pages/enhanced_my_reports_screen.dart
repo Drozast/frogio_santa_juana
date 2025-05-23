@@ -78,12 +78,10 @@ class _MyReportsScreenState extends State<MyReportsScreen>
           title: const Text('Mis Denuncias'),
           elevation: 0,
           actions: [
-            // Search button
             IconButton(
               icon: const Icon(Icons.search),
               onPressed: _showSearchDialog,
             ),
-            // Menu
             PopupMenuButton<String>(
               onSelected: _handleMenuAction,
               itemBuilder: (context) => [
@@ -147,10 +145,7 @@ class _MyReportsScreenState extends State<MyReportsScreen>
   Widget _buildReportsListTab() {
     return Column(
       children: [
-        // Filters
         _buildFiltersSection(),
-        
-        // Reports list
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async => _loadReports(),
@@ -207,7 +202,6 @@ class _MyReportsScreenState extends State<MyReportsScreen>
       ),
       child: Column(
         children: [
-          // Status filters
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -234,7 +228,6 @@ class _MyReportsScreenState extends State<MyReportsScreen>
             ),
           ),
           
-          // Search bar (if there's a search query)
           if (_searchQuery.isNotEmpty) ...[
             const SizedBox(height: 8),
             Container(
@@ -297,7 +290,6 @@ class _MyReportsScreenState extends State<MyReportsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Overview cards
           Row(
             children: [
               Expanded(
@@ -343,7 +335,6 @@ class _MyReportsScreenState extends State<MyReportsScreen>
           ),
           const SizedBox(height: 24),
           
-          // Charts section
           const Text(
             'Estadísticas por Estado',
             style: TextStyle(
@@ -356,7 +347,6 @@ class _MyReportsScreenState extends State<MyReportsScreen>
           
           const SizedBox(height: 24),
           
-          // Recent activity
           const Text(
             'Actividad Reciente',
             style: TextStyle(
@@ -602,7 +592,6 @@ class _MyReportsScreenState extends State<MyReportsScreen>
       stats[status] = (stats[status] ?? 0) + 1;
     }
     
-    // Combine some statuses for summary
     final pending = (stats['submitted'] ?? 0) + (stats['reviewing'] ?? 0);
     
     return {
