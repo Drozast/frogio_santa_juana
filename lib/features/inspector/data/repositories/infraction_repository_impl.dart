@@ -1,3 +1,4 @@
+// lib/features/inspector/data/repositories/infraction_repository_impl.dart
 import 'dart:io';
 
 import 'package:dartz/dartz.dart';
@@ -49,39 +50,33 @@ class InfractionRepositoryImpl implements InfractionRepository {
     required List<File> evidence,
   }) async {
     try {
-      // Subir imágenes de evidencia primero
-      List<String> evidenceUrls = [];
-      for (File file in evidence) {
-        final url = await remoteDataSource.uploadEvidenceImage('temp', file);
-        evidenceUrls.add(url);
-      }
-
       // Crear el modelo de infracción
       final model = InfractionModel(
         id: '', // Se generará en el backend
         title: title,
         description: description,
         ordinanceRef: ordinanceRef,
-        location: {
-          'latitude': location.latitude,
-          'longitude': location.longitude,
-          'address': location.address,
-          'city': location.city,
-          'region': location.region,
-          'country': location.country,
-        },
+        location: LocationDataModel.fromEntity(location).toMap(),
         offenderId: offenderId,
         offenderName: offenderName,
         offenderDocument: offenderDocument,
         inspectorId: inspectorId,
-        muniId: '', // Debería venir del contexto
-        evidence: evidenceUrls,
+        muniId: '', // Debería venir del contexto del usuario
+        evidence: [], // Se subirán después
         signatures: [],
-        status: 'pending',
+        status: InfractionStatus.created.name,
         createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        historyLog: [],
       );
 
       final createdInfraction = await remoteDataSource.createInfraction(model);
+      
+      // Subir imágenes de evidencia si las hay
+      if (evidence.isNotEmpty) {
+        await remoteDataSource.uploadInfractionImages(evidence, createdInfraction.id);
+      }
+      
       return Right(createdInfraction.id);
     } catch (e) {
       return Left(ServerFailure('Error al crear infracción: ${e.toString()}'));
@@ -89,24 +84,10 @@ class InfractionRepositoryImpl implements InfractionRepository {
   }
 
   @override
-  Future<Either<Failure, InfractionEntity>> updateInfraction(
-      InfractionEntity infraction) async {
-    try {
-      final model = InfractionModel.fromEntity(infraction);
-      final updatedInfraction = await remoteDataSource.updateInfraction(model);
-      return Right(updatedInfraction.toEntity());
-    } catch (e) {
-      return Left(ServerFailure('Error al actualizar infracción: ${e.toString()}'));
-    }
-  }
-
-  @override
   Future<Either<Failure, void>> updateInfractionStatus(
-      String infractionId, InfractionStatus status, String? reason) async {
+      String infractionId, InfractionStatus status, String? comment) async {
     try {
-      // Convertir enum a string
-      String statusString = _infractionStatusToString(status);
-      await remoteDataSource.updateInfractionStatus(infractionId, statusString);
+      await remoteDataSource.updateInfractionStatus(infractionId, status.name, comment);
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure('Error al actualizar estado de infracción: ${e.toString()}'));
@@ -115,13 +96,9 @@ class InfractionRepositoryImpl implements InfractionRepository {
 
   @override
   Future<Either<Failure, List<String>>> uploadInfractionImages(
-      String infractionId, List<File> images) async {
+      List<File> images, String infractionId) async {
     try {
-      List<String> urls = [];
-      for (File image in images) {
-        final url = await remoteDataSource.uploadEvidenceImage(infractionId, image);
-        urls.add(url);
-      }
+      final urls = await remoteDataSource.uploadInfractionImages(images, infractionId);
       return Right(urls);
     } catch (e) {
       return Left(ServerFailure('Error al subir imágenes: ${e.toString()}'));
@@ -129,52 +106,13 @@ class InfractionRepositoryImpl implements InfractionRepository {
   }
 
   @override
-  Future<Either<Failure, String>> addSignature(
-      String infractionId, String signatureData) async {
+  Future<Either<Failure, void>> addSignature(
+      String infractionId, String signatureUrl) async {
     try {
-      final url = await remoteDataSource.uploadSignature(infractionId, signatureData);
-      return Right(url);
+      await remoteDataSource.uploadSignature(infractionId, signatureUrl);
+      return const Right(null);
     } catch (e) {
       return Left(ServerFailure('Error al agregar firma: ${e.toString()}'));
-    }
-  }
-
-  // Métodos auxiliares privados
-  String _infractionStatusToString(InfractionStatus status) {
-    switch (status) {
-      case InfractionStatus.pending:
-        return 'pending';
-      case InfractionStatus.confirmed:
-        return 'confirmed';
-      case InfractionStatus.appealed:
-        return 'appealed';
-      case InfractionStatus.cancelled:
-        return 'cancelled';
-      case InfractionStatus.paid:
-        return 'paid';
-      default:
-        return 'pending';
-    }
-  }
-
-  // Métodos adicionales que podrían estar en la interfaz pero no son override obligatorios
-  Future<Either<Failure, String>> uploadEvidenceImage(
-      String infractionId, File image) async {
-    try {
-      final url = await remoteDataSource.uploadEvidenceImage(infractionId, image);
-      return Right(url);
-    } catch (e) {
-      return Left(ServerFailure('Error al subir imagen de evidencia: ${e.toString()}'));
-    }
-  }
-
-  Future<Either<Failure, String>> uploadSignature(
-      String infractionId, String signatureData) async {
-    try {
-      final url = await remoteDataSource.uploadSignature(infractionId, signatureData);
-      return Right(url);
-    } catch (e) {
-      return Left(ServerFailure('Error al subir firma: ${e.toString()}'));
     }
   }
 
@@ -186,5 +124,50 @@ class InfractionRepositoryImpl implements InfractionRepository {
     } catch (e) {
       return Left(ServerFailure('Error al eliminar infracción: ${e.toString()}'));
     }
+  }
+}
+
+// Clase auxiliar para manejar LocationData
+class LocationDataModel extends LocationData {
+  const LocationDataModel({
+    required super.latitude,
+    required super.longitude,
+    super.address,
+    required super.city,
+    required super.region,
+    required super.country,
+  });
+
+  factory LocationDataModel.fromEntity(LocationData entity) {
+    return LocationDataModel(
+      latitude: entity.latitude,
+      longitude: entity.longitude,
+      address: entity.address,
+      city: entity.city,
+      region: entity.region,
+      country: entity.country,
+    );
+  }
+
+  factory LocationDataModel.fromMap(Map<String, dynamic> map) {
+    return LocationDataModel(
+      latitude: (map['latitude'] ?? 0).toDouble(),
+      longitude: (map['longitude'] ?? 0).toDouble(),
+      address: map['address'],
+      city: map['city'] ?? '',
+      region: map['region'] ?? '',
+      country: map['country'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'latitude': latitude,
+      'longitude': longitude,
+      'address': address,
+      'city': city,
+      'region': region,
+      'country': country,
+    };
   }
 }

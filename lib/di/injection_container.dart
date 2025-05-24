@@ -577,39 +577,47 @@ class UserStatistics extends Equatable {
 }
 
 // ===== VEHICLES FEATURE =====
-Future<void> _initVehiclesFeature() async {
-  logger.d('🚗 Initializing Vehicles feature...');
+Future<void> _initAdminFeature() async {
+  logger.d('👔 Initializing Admin feature...');
 
   // BLoCs
   sl.registerFactory(
-    () => VehicleBloc(
-      getVehicles: sl(),
-      startVehicleUsage: sl(),
-      endVehicleUsage: sl(),
+    () => UserManagementBloc(
+      getAllUsers: sl(),
+      updateUserRole: sl(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => StatisticsBloc(
+      getMunicipalStatistics: sl(),
     ),
   );
 
   // Use Cases
-  sl.registerLazySingleton(() => GetVehicles(sl()));
-  sl.registerLazySingleton(() => StartVehicleUsage(repository: sl()));
-  sl.registerLazySingleton(() => EndVehicleUsage(repository: sl()));
+  sl.registerLazySingleton(() => GetAllPendingQueries(sl()));
+  sl.registerLazySingleton(() => AnswerQuery(sl()));
+  sl.registerLazySingleton(() => GetMunicipalStatistics(sl()));
+  sl.registerLazySingleton(() => GetAllUsers(sl()));
+  sl.registerLazySingleton(() => UpdateUserRole(sl()));
+  sl.registerLazySingleton(() => ActivateUser(sl()));
+  sl.registerLazySingleton(() => DeactivateUser(sl()));
 
   // Repository
-  sl.registerLazySingleton<VehicleRepository>(
-    () => VehicleRepositoryImpl(remoteDataSource: sl()),
+  sl.registerLazySingleton<AdminRepository>(
+    () => AdminRepositoryImpl(remoteDataSource: sl()),
   );
 
   // Data Sources
-  sl.registerLazySingleton<VehicleRemoteDataSource>(
-    () => VehicleRemoteDataSourceImpl(
+  sl.registerLazySingleton<AdminRemoteDataSource>(
+    () => AdminRemoteDataSourceImpl(
       firestore: sl(),
-      uuid: sl(),
+      storage: sl(),
     ),
   );
   
-  logger.d('✅ Vehicles feature registered');
+  logger.d('✅ Admin feature registered');
 }
-
 // ===== DASHBOARD FEATURE =====
 Future<void> _initDashboardFeature() async {
   logger.d('📊 Initializing Dashboard feature...');

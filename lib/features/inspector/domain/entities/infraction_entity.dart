@@ -91,7 +91,9 @@ enum InfractionStatus {
   reviewed,
   appealed,
   confirmed,
-  cancelled, paid, pending;
+  cancelled,
+  paid,
+  pending;
 
   String get displayName {
     switch (this) {
@@ -109,6 +111,10 @@ enum InfractionStatus {
         return 'Confirmada';
       case InfractionStatus.cancelled:
         return 'Cancelada';
+      case InfractionStatus.paid:
+        return 'Pagada';
+      case InfractionStatus.pending:
+        return 'Pendiente';
     }
   }
 }
@@ -117,15 +123,39 @@ class LocationData extends Equatable {
   final double latitude;
   final double longitude;
   final String? address;
+  final String city;
+  final String region;
+  final String country;
 
   const LocationData({
     required this.latitude,
     required this.longitude,
-    this.address, required String city, required String region, required String country,
+    this.address,
+    required this.city,
+    required this.region,
+    required this.country,
   });
 
   @override
-  List<Object?> get props => [latitude, longitude, address];
+  List<Object?> get props => [latitude, longitude, address, city, region, country];
+
+  LocationData copyWith({
+    double? latitude,
+    double? longitude,
+    String? address,
+    String? city,
+    String? region,
+    String? country,
+  }) {
+    return LocationData(
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      address: address ?? this.address,
+      city: city ?? this.city,
+      region: region ?? this.region,
+      country: country ?? this.country,
+    );
+  }
 }
 
 class InfractionHistoryItem extends Equatable {
@@ -145,4 +175,20 @@ class InfractionHistoryItem extends Equatable {
 
   @override
   List<Object?> get props => [timestamp, status, comment, userId, userName];
+
+  InfractionHistoryItem copyWith({
+    DateTime? timestamp,
+    InfractionStatus? status,
+    String? comment,
+    String? userId,
+    String? userName,
+  }) {
+    return InfractionHistoryItem(
+      timestamp: timestamp ?? this.timestamp,
+      status: status ?? this.status,
+      comment: comment ?? this.comment,
+      userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+    );
+  }
 }
