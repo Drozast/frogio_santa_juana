@@ -2,9 +2,9 @@ part of 'theme_bloc.dart';
 
 class ThemeState extends Equatable {
   final bool isDarkMode;
-  
+
   const ThemeState({required this.isDarkMode});
-  
+
   ThemeData get themeData {
     if (isDarkMode) {
       return ThemeData(
@@ -16,7 +16,7 @@ class ThemeState extends Equatable {
           backgroundColor: Color(0xFF1F1F1F),
           elevation: 0,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: const Color(0xFF1F1F1F),
           elevation: 4,
           shape: RoundedRectangleBorder(
@@ -35,8 +35,9 @@ class ThemeState extends Equatable {
           elevation: 0,
           foregroundColor: Colors.white,
         ),
-        cardTheme: CardTheme(
-          elevation: 2,
+        cardTheme: CardThemeData(
+          color: const Color(0xFF1F1F1F),
+          elevation: 4,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -44,7 +45,7 @@ class ThemeState extends Equatable {
       );
     }
   }
-  
+
   @override
   List<Object> get props => [isDarkMode];
 }

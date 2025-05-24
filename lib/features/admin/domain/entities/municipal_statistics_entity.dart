@@ -17,7 +17,7 @@ class MunicipalStatisticsEntity extends Equatable {
     required this.infractions,
     required this.users,
     required this.vehicles,
-    required this.performance,
+    required this.performance, required int totalReports, required int resolvedReports, required int pendingReports, required int inProgressReports, required int totalQueries, required int answeredQueries, required int totalInfractions, required int activeUsers, required int inspectors, required DateTime lastUpdated,
   });
 
   @override
@@ -150,6 +150,8 @@ class UsersStatistics extends Equatable {
     userRegistrationsByMonth,
     averageUserEngagement,
   ];
+
+  static empty() {}
 }
 
 class VehiclesStatistics extends Equatable {

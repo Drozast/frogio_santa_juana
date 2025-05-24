@@ -17,7 +17,7 @@ class AdminRepositoryImpl implements AdminRepository {
   Future<Either<Failure, List<QueryEntity>>> getAllPendingQueries(String muniId) async {
     try {
       final queries = await remoteDataSource.getAllPendingQueries(muniId);
-      return Right(queries);
+      return Right(queries.cast<QueryEntity>());
     } catch (e) {
       return Left(ServerFailure('Error al obtener consultas pendientes: ${e.toString()}'));
     }

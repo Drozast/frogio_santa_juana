@@ -11,7 +11,7 @@ class UserManagementBloc extends Bloc<UserManagementEvent, UserManagementState> 
   final GetCurrentUser getCurrentUser;
 
   UserManagementBloc({
-    required this.getCurrentUser,
+    required this.getCurrentUser, required Object getAllPendingQueries, required Object answerQuery,
   }) : super(UserManagementInitial()) {
     on<LoadUsers>(_onLoadUsers);
     on<SearchUsers>(_onSearchUsers);

@@ -14,7 +14,7 @@ class InfractionRemoteDataSourceImpl implements InfractionRemoteDataSource {
 
   InfractionRemoteDataSourceImpl({
     required this.firestore,
-    required this.storage,
+    required this.storage, required Object uuid,
   });
 
   @override

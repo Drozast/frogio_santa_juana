@@ -1,9 +1,9 @@
-// lib/di/injection_container.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';
 
 // Core Services
@@ -54,7 +54,6 @@ import '../features/inspector/domain/usecases/create_infraction.dart';
 import '../features/inspector/domain/usecases/get_infractions_by_inspector.dart';
 import '../features/inspector/domain/usecases/update_infraction_status.dart';
 import '../features/inspector/domain/usecases/upload_infraction_image.dart';
-import '../features/inspector/presentation/bloc/infraction_bloc.dart';
 // Vehicles Feature
 import '../features/vehicles/data/datasources/vehicle_remote_data_source.dart';
 import '../features/vehicles/data/datasources/vehicle_remote_data_source_impl.dart';
@@ -63,12 +62,14 @@ import '../features/vehicles/domain/repositories/vehicle_repository.dart';
 import '../features/vehicles/domain/usecases/end_vehicle_usage.dart';
 import '../features/vehicles/domain/usecases/get_vehicles.dart';
 import '../features/vehicles/domain/usecases/start_vehicle_usage.dart';
+import '../features/vehicles/presentation/bloc/infraction_bloc.dart';
 import '../features/vehicles/presentation/bloc/vehicle_bloc.dart';
 
 final sl = GetIt.instance;
+final logger = Logger();
 
 Future<void> init() async {
-  print('🚀 FROGIO: Initializing dependencies...');
+  logger.i('🚀 FROGIO: Initializing dependencies...');
   
   // ===== CORE SERVICES =====
   await _initCoreServices();
@@ -93,13 +94,14 @@ Future<void> init() async {
   // ===== VALIDATION =====
   _validateDependencies();
   
-  print('✅ FROGIO: All dependencies initialized successfully');
+  logger.i('✅ FROGIO: All dependencies initialized successfully');
 }
 
 // ===== CORE SERVICES =====
 Future<void> _initCoreServices() async {
-  print('📦 Initializing core services...');
+  logger.d('📦 Initializing core services...');
   
+  sl.registerLazySingleton(() => Logger());
   sl.registerLazySingleton(() => SessionTimeoutService());
   sl.registerLazySingleton(() => MapsService());
   sl.registerLazySingleton(() => NotificationService());
@@ -107,32 +109,32 @@ Future<void> _initCoreServices() async {
   sl.registerFactory(() => NotificationBloc());
   sl.registerLazySingleton(() => const Uuid());
   
-  print('✅ Core services registered');
+  logger.d('✅ Core services registered');
 }
 
 // ===== FIREBASE SERVICES =====
 void _initFirebaseServices() {
-  print('🔥 Initializing Firebase services...');
+  logger.d('🔥 Initializing Firebase services...');
   
   sl.registerLazySingleton(() => FirebaseAuth.instance);
   sl.registerLazySingleton(() => FirebaseFirestore.instance);
   sl.registerLazySingleton(() => FirebaseStorage.instance);
   
-  print('✅ Firebase services registered');
+  logger.d('✅ Firebase services registered');
 }
 
 // ===== NETWORK SERVICES =====
 void _initNetworkServices() {
-  print('🌐 Initializing network services...');
+  logger.d('🌐 Initializing network services...');
   
   sl.registerLazySingleton(() => InternetConnectionChecker());
   
-  print('✅ Network services registered');
+  logger.d('✅ Network services registered');
 }
 
 // ===== AUTH FEATURE =====
 Future<void> _initAuthFeature() async {
-  print('🔐 Initializing Auth feature...');
+  logger.d('🔐 Initializing Auth feature...');
 
   // BLoCs
   sl.registerFactory(
@@ -175,12 +177,12 @@ Future<void> _initAuthFeature() async {
     ),
   );
   
-  print('✅ Auth feature registered');
+  logger.d('✅ Auth feature registered');
 }
 
 // ===== CITIZEN FEATURE (ENHANCED) =====
 Future<void> _initCitizenFeature() async {
-  print('👤 Initializing Citizen feature...');
+  logger.d('👤 Initializing Citizen feature...');
 
   // BLoCs
   sl.registerFactory(
@@ -222,12 +224,12 @@ Future<void> _initCitizenFeature() async {
     ),
   );
   
-  print('✅ Citizen feature registered');
+  logger.d('✅ Citizen feature registered');
 }
 
 // ===== INSPECTOR FEATURE =====
 Future<void> _initInspectorFeature() async {
-  print('🕵️ Initializing Inspector feature...');
+  logger.d('🕵️ Initializing Inspector feature...');
 
   // BLoCs
   sl.registerFactory(
@@ -255,20 +257,20 @@ Future<void> _initInspectorFeature() async {
     () => InfractionRemoteDataSourceImpl(
       firestore: sl(),
       storage: sl(),
-      uuid: sl(),
     ),
   );
   
-  print('✅ Inspector feature registered');
+  logger.d('✅ Inspector feature registered');
 }
 
 // ===== ADMIN FEATURE =====
 Future<void> _initAdminFeature() async {
-  print('👨‍💼 Initializing Admin feature...');
+  logger.d('👨‍💼 Initializing Admin feature...');
 
   // BLoCs
   sl.registerFactory(
     () => UserManagementBloc(
+      getCurrentUser: sl(),  // Corregido: ahora usa sl() en lugar de null
       getAllPendingQueries: sl(),
       answerQuery: sl(),
     ),
@@ -298,12 +300,12 @@ Future<void> _initAdminFeature() async {
     ),
   );
   
-  print('✅ Admin feature registered');
+  logger.d('✅ Admin feature registered');
 }
 
 // ===== VEHICLES FEATURE =====
 Future<void> _initVehiclesFeature() async {
-  print('🚗 Initializing Vehicles feature...');
+  logger.d('🚗 Initializing Vehicles feature...');
 
   // BLoCs
   sl.registerFactory(
@@ -316,8 +318,8 @@ Future<void> _initVehiclesFeature() async {
 
   // Use Cases
   sl.registerLazySingleton(() => GetVehicles(sl()));
-  sl.registerLazySingleton(() => StartVehicleUsage(sl()));
-  sl.registerLazySingleton(() => EndVehicleUsage(sl()));
+  sl.registerLazySingleton(() => StartVehicleUsage(repository: sl()));  // Corregido
+  sl.registerLazySingleton(() => EndVehicleUsage(repository: sl()));    // Corregido
 
   // Repository
   sl.registerLazySingleton<VehicleRepository>(
@@ -332,22 +334,22 @@ Future<void> _initVehiclesFeature() async {
     ),
   );
   
-  print('✅ Vehicles feature registered');
+  logger.d('✅ Vehicles feature registered');
 }
 
 // ===== DASHBOARD FEATURE =====
 Future<void> _initDashboardFeature() async {
-  print('📊 Initializing Dashboard feature...');
+  logger.d('📊 Initializing Dashboard feature...');
 
   // BLoCs
   sl.registerFactory(() => ThemeBloc());
   
-  print('✅ Dashboard feature registered');
+  logger.d('✅ Dashboard feature registered');
 }
 
 // ===== SERVICE INITIALIZATION =====
 Future<void> _initializeServices() async {
-  print('🔧 Initializing services...');
+  logger.d('🔧 Initializing services...');
   
   try {
     final notificationService = sl<NotificationService>();
@@ -359,18 +361,19 @@ Future<void> _initializeServices() async {
     final sessionService = sl<SessionTimeoutService>();
     sessionService.startTimer();
     
-    print('✅ Services initialized successfully');
+    logger.d('✅ Services initialized successfully');
   } catch (e) {
-    print('❌ Error initializing services: $e');
+    logger.e('❌ Error initializing services: $e');
     rethrow;
   }
 }
 
 // ===== VALIDATION =====
 void _validateDependencies() {
-  print('🔍 Validating dependencies...');
+  logger.d('🔍 Validating dependencies...');
   
   final validations = <String, bool>{
+    'Logger': _validateService<Logger>(),
     'SessionTimeoutService': _validateService<SessionTimeoutService>(),
     'MapsService': _validateService<MapsService>(),
     'NotificationService': _validateService<NotificationService>(),
@@ -387,11 +390,11 @@ void _validateDependencies() {
   final failed = validations.entries.where((e) => !e.value).map((e) => e.key).toList();
   
   if (failed.isNotEmpty) {
-    print('❌ Failed dependencies: ${failed.join(', ')}');
+    logger.e('❌ Failed dependencies: ${failed.join(', ')}');
     throw Exception('Dependency validation failed for: ${failed.join(', ')}');
   }
   
-  print('✅ All dependencies validated successfully');
+  logger.d('✅ All dependencies validated successfully');
 }
 
 bool _validateService<T extends Object>() {
@@ -405,13 +408,14 @@ bool _validateService<T extends Object>() {
 
 // ===== UTILITY METHODS =====
 Future<void> resetDependencies() async {
-  print('🔄 Resetting dependencies...');
+  logger.i('🔄 Resetting dependencies...');
   await sl.reset();
-  print('✅ Dependencies reset');
+  logger.i('✅ Dependencies reset');
 }
 
 Map<String, bool> getDependencyInfo() {
   return {
+    'Logger': sl.isRegistered<Logger>(),
     'SessionTimeoutService': sl.isRegistered<SessionTimeoutService>(),
     'MapsService': sl.isRegistered<MapsService>(),
     'NotificationService': sl.isRegistered<NotificationService>(),
@@ -435,15 +439,15 @@ Map<String, bool> getDependencyInfo() {
 
 void printDependencies() {
   final info = getDependencyInfo();
-  print('🔧 FROGIO Dependencies Status:');
+  logger.i('🔧 FROGIO Dependencies Status:');
   info.forEach((key, value) {
-    print('  ${value ? '✅' : '❌'} $key');
+    logger.i('  ${value ? '✅' : '❌'} $key');
   });
 }
 
 // ===== ERROR HANDLING =====
 void logDependencyError(String feature, dynamic error) {
-  print('❌ FROGIO [$feature]: $error');
+  logger.e('❌ FROGIO [$feature]: $error');
 }
 
 // ===== HEALTH CHECK =====
@@ -455,9 +459,9 @@ bool isHealthy() {
       sl<AuthBloc>(),
       sl<SessionTimeoutService>(),
     ];
-    return requiredServices.every((service) => service != null);
+    return true;  // Eliminada la comparación innecesaria con null (línea 464)
   } catch (e) {
-    print('❌ Health check failed: $e');
+    logger.e('❌ Health check failed: $e');
     return false;
   }
 }
