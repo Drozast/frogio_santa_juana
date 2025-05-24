@@ -57,6 +57,77 @@ class MunicipalStatisticsModel extends Equatable {
     };
   }
 
+  // Métodos auxiliares para crear objetos de estadísticas con todos los parámetros requeridos
+  ReportsStatistics _createReportsStatistics() {
+    return ReportsStatistics(
+      totalReports: totalReports,
+      resolvedReports: resolvedReports,
+      pendingReports: pendingReports,
+      inProgressReports: inProgressReports,
+      rejectedReports: 0, // Valor por defecto
+      averageResolutionTimeHours: 24.0, // Valor por defecto
+      reportsByCategory: const {}, // Mapa vacío
+      reportsByMonth: const {}, // Mapa vacío
+      citizenSatisfactionRate: 0.0, // Valor por defecto
+    );
+  }
+
+  InfractionsStatistics _createInfractionsStatistics() {
+    return InfractionsStatistics(
+      totalInfractions: totalInfractions,
+      confirmedInfractions: totalInfractions,
+      appealedInfractions: 0, // Valor por defecto
+      cancelledInfractions: 0, // Valor por defecto
+      totalFinesAmount: 0.0, // Valor por defecto
+      collectedAmount: 0.0, // Valor por defecto
+      infractionsByType: const {}, // Mapa vacío
+      infractionsByInspector: const {}, // Mapa vacío
+      averageProcessingTimeHours: 72.0, // Valor por defecto
+    );
+  }
+
+  UsersStatistics _createUsersStatistics() {
+    return UsersStatistics(
+      totalUsers: activeUsers,
+      citizenUsers: activeUsers - inspectors, // Calculado
+      inspectorUsers: inspectors,
+      adminUsers: 0, // Valor por defecto
+      activeUsers: activeUsers,
+      inactiveUsers: 0, // Valor por defecto
+      userRegistrationsByMonth: const {}, // Mapa vacío
+      averageUserEngagement: 0.0, // Valor por defecto
+    );
+  }
+
+  VehiclesStatistics _createVehiclesStatistics() {
+    return const VehiclesStatistics(
+      totalVehicles: 0, // Valor por defecto
+      activeVehicles: 0, // Valor por defecto
+      inMaintenanceVehicles: 0, // Valor por defecto
+      totalKilometers: 0.0, // Valor por defecto
+      averageKmPerVehicle: 0.0, // Valor por defecto
+      usageByVehicle: {}, // Mapa vacío
+      maintenanceCosts: 0.0, // Valor por defecto
+      fuelCosts: 0.0, // Valor por defecto
+    );
+  }
+
+  PerformanceMetrics _createPerformanceMetrics() {
+    // Calcular métricas de rendimiento basadas en los datos disponibles
+    double resolutionRateCalc = totalReports > 0 ? (resolvedReports / totalReports) * 100 : 0.0;
+    double responseRateCalc = totalQueries > 0 ? (answeredQueries / totalQueries) * 100 : 0.0;
+    
+    return PerformanceMetrics(
+      overallEfficiencyScore: (resolutionRateCalc + responseRateCalc) / 2, // Promedio
+      responseTimeScore: responseRateCalc,
+      resolutionQualityScore: resolutionRateCalc,
+      citizenSatisfactionScore: 80.0, // Valor por defecto
+      inspectorProductivityScore: inspectors > 0 ? totalInfractions / inspectors : 0.0,
+      monthlyPerformance: const {}, // Mapa vacío
+      recommendations: const [], // Lista vacía
+    );
+  }
+
   MunicipalStatisticsEntity toEntity() {
     return MunicipalStatisticsEntity(
       totalReports: totalReports,
@@ -68,7 +139,14 @@ class MunicipalStatisticsModel extends Equatable {
       totalInfractions: totalInfractions,
       activeUsers: activeUsers,
       inspectors: inspectors,
-      lastUpdated: lastUpdated, muniId: '', generatedAt: null, reports: null, infractions: null, users: null, vehicles: null, performance: null,
+      lastUpdated: lastUpdated,
+      muniId: '', // Valor por defecto - ajustar según necesidad
+      generatedAt: lastUpdated, // Usar lastUpdated como generatedAt
+      reports: _createReportsStatistics(),
+      infractions: _createInfractionsStatistics(),
+      users: _createUsersStatistics(),
+      vehicles: _createVehiclesStatistics(),
+      performance: _createPerformanceMetrics(),
     );
   }
 

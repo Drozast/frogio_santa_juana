@@ -41,8 +41,8 @@ class QueryModel extends Equatable {
       responderId: json['responderId'],
       imageUrls: List<String>.from(json['imageUrls'] ?? []),
       createdAt: (json['createdAt'] as dynamic).toDate() ?? DateTime.now(),
-      answeredAt: json['answeredAt'] != null 
-          ? (json['answeredAt'] as dynamic).toDate() 
+      answeredAt: json['answeredAt'] != null
+          ? (json['answeredAt'] as dynamic).toDate()
           : null,
     );
   }
@@ -63,6 +63,24 @@ class QueryModel extends Equatable {
     };
   }
 
+  // Método auxiliar para convertir String a QueryStatus enum
+  QueryStatus _getQueryStatus(String statusString) {
+    switch (statusString.toLowerCase()) {
+      case 'pending':
+        return QueryStatus.pending;
+      case 'answered':
+        return QueryStatus.answered;
+      case 'in_progress':
+        return QueryStatus.answered; // Mapear a answered si no existe inProgress
+      case 'resolved':
+        return QueryStatus.answered; // Mapear a answered si no existe resolved
+      case 'cancelled':
+        return QueryStatus.pending; // Mapear a pending si no existe cancelled
+      default:
+        return QueryStatus.pending;
+    }
+  }
+
   QueryEntity toEntity() {
     return QueryEntity(
       id: id,
@@ -70,12 +88,20 @@ class QueryModel extends Equatable {
       description: description,
       citizenId: citizenId,
       muniId: muniId,
-      status: status,
+      status: _getQueryStatus(status), // Convertir String a QueryStatus enum
       response: response,
       responderId: responderId,
       imageUrls: imageUrls,
       createdAt: createdAt,
-      answeredAt: answeredAt, citizenName: '', citizenEmail: '', category: null, priority: null, updatedAt: null, historyLog: [], isUrgent: null, tags: [],
+      answeredAt: answeredAt,
+      citizenName: '', // Valor por defecto
+      citizenEmail: '', // Valor por defecto
+      category: QueryCategory.general, // Cambiar según las constantes disponibles en tu enum
+      priority: QueryPriority.low, // Cambiar según las constantes disponibles en tu enum
+      updatedAt: answeredAt ?? createdAt, // Usar answeredAt o createdAt como fallback
+      historyLog: const [], // Lista vacía const
+      isUrgent: false, // Valor por defecto
+      tags: const [], // Lista vacía const
     );
   }
 

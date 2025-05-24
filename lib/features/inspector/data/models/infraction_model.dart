@@ -79,13 +79,44 @@ class InfractionModel extends Equatable {
     };
   }
 
+  // Método auxiliar para convertir Map a LocationData
+  LocationData _createLocationData() {
+    return LocationData(
+      latitude: (location['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (location['longitude'] as num?)?.toDouble() ?? 0.0,
+      address: location['address'] as String? ?? '',
+      city: location['city'] as String? ?? '',
+      region: location['region'] as String? ?? '',
+      country: location['country'] as String? ?? '',
+      // Agregar otros campos según tu modelo LocationData
+    );
+  }
+
+  // Método auxiliar para convertir String a InfractionStatus enum
+  InfractionStatus _getInfractionStatus() {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return InfractionStatus.pending;
+      case 'confirmed':
+        return InfractionStatus.confirmed;
+      case 'appealed':
+        return InfractionStatus.appealed;
+      case 'cancelled':
+        return InfractionStatus.cancelled;
+      case 'paid':
+        return InfractionStatus.paid;
+      default:
+        return InfractionStatus.pending;
+    }
+  }
+
   InfractionEntity toEntity() {
     return InfractionEntity(
       id: id,
       title: title,
       description: description,
       ordinanceRef: ordinanceRef,
-      location: location,
+      location: _createLocationData(),
       offenderId: offenderId,
       offenderName: offenderName,
       offenderDocument: offenderDocument,
@@ -93,10 +124,42 @@ class InfractionModel extends Equatable {
       muniId: muniId,
       evidence: evidence,
       signatures: signatures,
-      status: status,
+      status: _getInfractionStatus(),
       createdAt: createdAt,
-      updatedAt: updatedAt,
+      updatedAt: updatedAt ?? createdAt, // Usar createdAt como fallback si updatedAt es null
+      historyLog: const [], // Lista vacía por defecto
     );
+  }
+
+  // Método auxiliar para convertir LocationData a Map
+  static Map<String, dynamic> _locationDataToMap(LocationData locationData) {
+    return {
+      'latitude': locationData.latitude,
+      'longitude': locationData.longitude,
+      'address': locationData.address,
+      'city': locationData.city,
+      'region': locationData.region,
+      'country': locationData.country,
+      // Agregar otros campos según tu modelo LocationData
+    };
+  }
+
+  // Método auxiliar para convertir InfractionStatus enum a String
+  static String _infractionStatusToString(InfractionStatus status) {
+    switch (status) {
+      case InfractionStatus.pending:
+        return 'pending';
+      case InfractionStatus.confirmed:
+        return 'confirmed';
+      case InfractionStatus.appealed:
+        return 'appealed';
+      case InfractionStatus.cancelled:
+        return 'cancelled';
+      case InfractionStatus.paid:
+        return 'paid';
+      default:
+        return 'pending';
+    }
   }
 
   factory InfractionModel.fromEntity(InfractionEntity entity) {
@@ -105,7 +168,7 @@ class InfractionModel extends Equatable {
       title: entity.title,
       description: entity.description,
       ordinanceRef: entity.ordinanceRef,
-      location: entity.location,
+      location: _locationDataToMap(entity.location),
       offenderId: entity.offenderId,
       offenderName: entity.offenderName,
       offenderDocument: entity.offenderDocument,
@@ -113,7 +176,7 @@ class InfractionModel extends Equatable {
       muniId: entity.muniId,
       evidence: entity.evidence,
       signatures: entity.signatures,
-      status: entity.status,
+      status: _infractionStatusToString(entity.status),
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     );

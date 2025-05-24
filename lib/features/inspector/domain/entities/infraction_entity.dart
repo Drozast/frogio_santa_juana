@@ -91,7 +91,7 @@ enum InfractionStatus {
   reviewed,
   appealed,
   confirmed,
-  cancelled;
+  cancelled, paid, pending;
 
   String get displayName {
     switch (this) {
@@ -121,7 +121,7 @@ class LocationData extends Equatable {
   const LocationData({
     required this.latitude,
     required this.longitude,
-    this.address,
+    this.address, required String city, required String region, required String country,
   });
 
   @override

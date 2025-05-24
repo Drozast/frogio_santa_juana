@@ -37,14 +37,28 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
   }
 
   @override
-  Future<void> answerQuery(String queryId, String response, String responderId) async {
+  Future<void> answerQuery(
+    String queryId,
+    String response,
+    String responderId, {
+    required String adminId,
+    List<String>? attachments,
+  }) async {
     try {
-      await firestore.collection('queries').doc(queryId).update({
+      Map<String, dynamic> updateData = {
         'response': response,
         'responderId': responderId,
+        'adminId': adminId,
         'status': 'answered',
         'answeredAt': FieldValue.serverTimestamp(),
-      });
+      };
+
+      // Agregar archivos adjuntos si existen
+      if (attachments != null && attachments.isNotEmpty) {
+        updateData['attachments'] = attachments;
+      }
+
+      await firestore.collection('queries').doc(queryId).update(updateData);
     } catch (e) {
       throw Exception('Error al responder consulta: $e');
     }
@@ -134,6 +148,30 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
           .toList();
     } catch (e) {
       throw Exception('Error al obtener usuarios: $e');
+    }
+  }
+
+  @override
+  Future<List<UserModel>> getUsersByRole({
+    required String muniId,
+    required String role,
+  }) async {
+    try {
+      final querySnapshot = await firestore
+          .collection('users')
+          .where('muniId', isEqualTo: muniId)
+          .where('role', isEqualTo: role)
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => UserModel.fromJson({
+                ...doc.data(),
+                'id': doc.id,
+              }))
+          .toList();
+    } catch (e) {
+      throw Exception('Error al obtener usuarios por rol: $e');
     }
   }
 

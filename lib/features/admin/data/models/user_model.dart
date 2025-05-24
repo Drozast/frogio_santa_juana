@@ -34,9 +34,11 @@ class UserModel extends Equatable {
       muniId: json['muniId'],
       profileImageUrl: json['profileImageUrl'],
       isActive: json['isActive'] ?? true,
-      createdAt: (json['createdAt'] as dynamic).toDate() ?? DateTime.now(),
-      updatedAt: json['updatedAt'] != null 
-          ? (json['updatedAt'] as dynamic).toDate() 
+      createdAt: json['createdAt'] != null
+          ? (json['createdAt'] as dynamic).toDate()
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? (json['updatedAt'] as dynamic).toDate()
           : null,
     );
   }
@@ -62,7 +64,8 @@ class UserModel extends Equatable {
       email: email,
       role: role,
       muniId: muniId,
-      profileImageUrl: profileImageUrl, createdAt: null,
+      profileImageUrl: profileImageUrl,
+      createdAt: null, // Aquí parece que faltaba una coma para separar el argumento
     );
   }
 
