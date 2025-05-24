@@ -4,7 +4,7 @@ abstract class UserManagementState extends Equatable {
   const UserManagementState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class UserManagementInitial extends UserManagementState {}

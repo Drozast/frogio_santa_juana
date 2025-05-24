@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/infraction_entity.dart';
@@ -18,6 +19,7 @@ class InfractionModel extends Equatable {
   final String status;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final List<Map<String, dynamic>> historyLog;
 
   const InfractionModel({
     required this.id,
@@ -35,6 +37,7 @@ class InfractionModel extends Equatable {
     required this.status,
     required this.createdAt,
     this.updatedAt,
+    required this.historyLog,
   });
 
   factory InfractionModel.fromJson(Map<String, dynamic> json) {
@@ -43,7 +46,7 @@ class InfractionModel extends Equatable {
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       ordinanceRef: json['ordinanceRef'] ?? '',
-      location: json['location'] ?? {},
+      location: Map<String, dynamic>.from(json['location'] ?? {}),
       offenderId: json['offenderId'] ?? '',
       offenderName: json['offenderName'] ?? '',
       offenderDocument: json['offenderDocument'] ?? '',
@@ -51,11 +54,16 @@ class InfractionModel extends Equatable {
       muniId: json['muniId'] ?? '',
       evidence: List<String>.from(json['evidence'] ?? []),
       signatures: List<String>.from(json['signatures'] ?? []),
-      status: json['status'] ?? 'pending',
-      createdAt: (json['createdAt'] as dynamic).toDate() ?? DateTime.now(),
-      updatedAt: json['updatedAt'] != null 
-          ? (json['updatedAt'] as dynamic).toDate() 
-          : null,
+      status: json['status'] ?? 'created',
+      createdAt: json['createdAt'] is Timestamp
+          ? (json['createdAt'] as Timestamp).toDate()
+          : DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      updatedAt: json['updatedAt'] is Timestamp
+          ? (json['updatedAt'] as Timestamp).toDate()
+          : json['updatedAt'] != null
+              ? DateTime.parse(json['updatedAt'])
+              : null,
+      historyLog: List<Map<String, dynamic>>.from(json['historyLog'] ?? []),
     );
   }
 
@@ -76,6 +84,7 @@ class InfractionModel extends Equatable {
       'status': status,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
+      'historyLog': historyLog,
     };
   }
 
@@ -84,29 +93,36 @@ class InfractionModel extends Equatable {
     return LocationData(
       latitude: (location['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (location['longitude'] as num?)?.toDouble() ?? 0.0,
-      address: location['address'] as String? ?? '',
+      address: location['address'] as String?,
       city: location['city'] as String? ?? '',
       region: location['region'] as String? ?? '',
       country: location['country'] as String? ?? '',
-      // Agregar otros campos según tu modelo LocationData
     );
   }
 
   // Método auxiliar para convertir String a InfractionStatus enum
   InfractionStatus _getInfractionStatus() {
     switch (status.toLowerCase()) {
-      case 'pending':
-        return InfractionStatus.pending;
-      case 'confirmed':
-        return InfractionStatus.confirmed;
+      case 'created':
+        return InfractionStatus.created;
+      case 'signed':
+        return InfractionStatus.signed;
+      case 'submitted':
+        return InfractionStatus.submitted;
+      case 'reviewed':
+        return InfractionStatus.reviewed;
       case 'appealed':
         return InfractionStatus.appealed;
+      case 'confirmed':
+        return InfractionStatus.confirmed;
       case 'cancelled':
         return InfractionStatus.cancelled;
       case 'paid':
         return InfractionStatus.paid;
-      default:
+      case 'pending':
         return InfractionStatus.pending;
+      default:
+        return InfractionStatus.created;
     }
   }
 
@@ -126,9 +142,42 @@ class InfractionModel extends Equatable {
       signatures: signatures,
       status: _getInfractionStatus(),
       createdAt: createdAt,
-      updatedAt: updatedAt ?? createdAt, // Usar createdAt como fallback si updatedAt es null
-      historyLog: const [], // Lista vacía por defecto
+      updatedAt: updatedAt ?? createdAt,
+      historyLog: historyLog.map((item) => InfractionHistoryItem(
+        timestamp: item['timestamp'] is Timestamp
+            ? (item['timestamp'] as Timestamp).toDate()
+            : DateTime.parse(item['timestamp'] ?? DateTime.now().toIso8601String()),
+        status: _stringToInfractionStatus(item['status'] ?? 'created'),
+        comment: item['comment'],
+        userId: item['userId'],
+        userName: item['userName'],
+      )).toList(),
     );
+  }
+
+  InfractionStatus _stringToInfractionStatus(String statusString) {
+    switch (statusString.toLowerCase()) {
+      case 'created':
+        return InfractionStatus.created;
+      case 'signed':
+        return InfractionStatus.signed;
+      case 'submitted':
+        return InfractionStatus.submitted;
+      case 'reviewed':
+        return InfractionStatus.reviewed;
+      case 'appealed':
+        return InfractionStatus.appealed;
+      case 'confirmed':
+        return InfractionStatus.confirmed;
+      case 'cancelled':
+        return InfractionStatus.cancelled;
+      case 'paid':
+        return InfractionStatus.paid;
+      case 'pending':
+        return InfractionStatus.pending;
+      default:
+        return InfractionStatus.created;
+    }
   }
 
   // Método auxiliar para convertir LocationData a Map
@@ -140,26 +189,12 @@ class InfractionModel extends Equatable {
       'city': locationData.city,
       'region': locationData.region,
       'country': locationData.country,
-      // Agregar otros campos según tu modelo LocationData
     };
   }
 
   // Método auxiliar para convertir InfractionStatus enum a String
   static String _infractionStatusToString(InfractionStatus status) {
-    switch (status) {
-      case InfractionStatus.pending:
-        return 'pending';
-      case InfractionStatus.confirmed:
-        return 'confirmed';
-      case InfractionStatus.appealed:
-        return 'appealed';
-      case InfractionStatus.cancelled:
-        return 'cancelled';
-      case InfractionStatus.paid:
-        return 'paid';
-      default:
-        return 'pending';
-    }
+    return status.name;
   }
 
   factory InfractionModel.fromEntity(InfractionEntity entity) {
@@ -179,6 +214,13 @@ class InfractionModel extends Equatable {
       status: _infractionStatusToString(entity.status),
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      historyLog: entity.historyLog.map((item) => {
+        'timestamp': item.timestamp,
+        'status': item.status.name,
+        'comment': item.comment,
+        'userId': item.userId,
+        'userName': item.userName,
+      }).toList(),
     );
   }
 
@@ -198,6 +240,7 @@ class InfractionModel extends Equatable {
     String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<Map<String, dynamic>>? historyLog,
   }) {
     return InfractionModel(
       id: id ?? this.id,
@@ -215,6 +258,7 @@ class InfractionModel extends Equatable {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      historyLog: historyLog ?? this.historyLog,
     );
   }
 
@@ -235,5 +279,6 @@ class InfractionModel extends Equatable {
         status,
         createdAt,
         updatedAt,
+        historyLog,
       ];
 }

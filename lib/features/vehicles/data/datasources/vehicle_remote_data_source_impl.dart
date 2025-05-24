@@ -1,11 +1,10 @@
-// lib/features/vehicles/data/datasources/vehicle_remote_data_source_impl.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../core/error/failures.dart';
-import '../domain/entities/vehicle_entity.dart';
-import '../repositories/datasources/vehicle_remote_data_source.dart';
-import '../repositories/models/vehicle_model.dart';
+import '../../../../core/error/failures.dart';
+import '../../domain/entities/vehicle_entity.dart';
+import '../models/vehicle_model.dart';
+import 'vehicle_remote_data_source.dart';
 
 class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
   final FirebaseFirestore firestore;

@@ -4,53 +4,57 @@ abstract class UserManagementEvent extends Equatable {
   const UserManagementEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class LoadUsers extends UserManagementEvent {
-  final String? municipalityId;
+  final String muniId;
 
-  const LoadUsers({this.municipalityId});
+  const LoadUsers({required this.muniId});
 
   @override
-  List<Object> get props => [municipalityId ?? ''];
+  List<Object> get props => [muniId];
 }
 
 class SearchUsers extends UserManagementEvent {
-  final String query;
+  final String? query;
 
-  const SearchUsers({required this.query});
+  const SearchUsers({this.query});
 
   @override
-  List<Object> get props => [query];
+  List<Object?> get props => [query];
 }
 
-class UpdateUserRole extends UserManagementEvent {
+class UpdateUserRoleEvent extends UserManagementEvent {
   final String userId;
   final String newRole;
+  final String adminId;
+  final String muniId;
 
-  const UpdateUserRole({
+  const UpdateUserRoleEvent({
     required this.userId,
     required this.newRole,
+    required this.adminId,
+    required this.muniId,
   });
 
   @override
-  List<Object> get props => [userId, newRole];
+  List<Object> get props => [userId, newRole, adminId, muniId];
 }
 
-class DeactivateUser extends UserManagementEvent {
+class DeactivateUserEvent extends UserManagementEvent {
   final String userId;
 
-  const DeactivateUser({required this.userId});
+  const DeactivateUserEvent({required this.userId});
 
   @override
   List<Object> get props => [userId];
 }
 
-class ActivateUser extends UserManagementEvent {
+class ActivateUserEvent extends UserManagementEvent {
   final String userId;
 
-  const ActivateUser({required this.userId});
+  const ActivateUserEvent({required this.userId});
 
   @override
   List<Object> get props => [userId];
