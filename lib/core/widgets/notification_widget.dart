@@ -9,11 +9,11 @@ class NotificationWidget extends StatelessWidget {
   final Function(AppNotification)? onNotificationDismiss;
 
   const NotificationWidget({
-    Key? key,
+    super.key,
     required this.notifications,
     this.onNotificationTap,
     this.onNotificationDismiss,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +136,7 @@ class NotificationWidget extends StatelessWidget {
     }
 
     return CircleAvatar(
-      backgroundColor: color.withOpacity(0.2),
+      backgroundColor: color.withValues(alpha: 0.2),
       child: Icon(icon, color: color),
     );
   }
@@ -163,11 +163,11 @@ class InAppNotificationOverlay extends StatefulWidget {
   final VoidCallback? onTap;
 
   const InAppNotificationOverlay({
-    Key? key,
+    super.key,
     required this.notification,
     this.onDismiss,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<InAppNotificationOverlay> createState() => _InAppNotificationOverlayState();
@@ -244,7 +244,7 @@ class _InAppNotificationOverlayState extends State<InAppNotificationOverlay>
                 child: Row(
                   children: [
                     CircleAvatar(
-                      backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
+                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.2),
                       child: const Icon(
                         Icons.notifications,
                         color: AppTheme.primaryColor,

@@ -113,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             height: 150,
                             width: 150,
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              color: AppTheme.primaryColor.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(

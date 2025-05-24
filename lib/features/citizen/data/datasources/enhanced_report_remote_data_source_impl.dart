@@ -103,7 +103,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         statusHistory: [initialHistory],
-        responses: [],
+        responses: const [],
       );
 
       // Guardar en Firestore

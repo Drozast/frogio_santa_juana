@@ -19,13 +19,13 @@ class EnhancedResponseInputWidget extends StatefulWidget {
   final VoidCallback? onResponseAdded;
 
   const EnhancedResponseInputWidget({
-    Key? key,
+    super.key,
     required this.reportId,
     required this.currentUserRole,
     required this.currentUserId,
     required this.currentUserName,
     this.onResponseAdded,
-  }) : super(key: key);
+  });
 
   @override
   State<EnhancedResponseInputWidget> createState() => _EnhancedResponseInputWidgetState();
@@ -39,7 +39,7 @@ class _EnhancedResponseInputWidgetState extends State<EnhancedResponseInputWidge
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   
-  List<File> _attachments = [];
+  final List<File> _attachments = [];
   bool _isPublic = true;
   bool _isExpanded = false;
   bool _requiresFollowUp = false;
@@ -97,7 +97,7 @@ class _EnhancedResponseInputWidgetState extends State<EnhancedResponseInputWidge
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, -4),
             ),
@@ -126,7 +126,7 @@ class _EnhancedResponseInputWidgetState extends State<EnhancedResponseInputWidge
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(

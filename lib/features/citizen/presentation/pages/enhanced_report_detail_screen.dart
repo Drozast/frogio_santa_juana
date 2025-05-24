@@ -1,6 +1,7 @@
 // lib/features/citizen/presentation/pages/enhanced_report_detail_screen.dart
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
@@ -195,7 +196,7 @@ class _EnhancedReportDetailScreenState extends State<EnhancedReportDetailScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -427,7 +428,7 @@ class _EnhancedReportDetailScreenState extends State<EnhancedReportDetailScreen>
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.grey.withValues(alpha: 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -668,7 +669,7 @@ class _EnhancedReportDetailScreenState extends State<EnhancedReportDetailScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.2),
+                      color: Colors.orange.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
@@ -750,7 +751,7 @@ class _EnhancedReportDetailScreenState extends State<EnhancedReportDetailScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color, width: 1),
       ),
@@ -772,7 +773,7 @@ class _EnhancedReportDetailScreenState extends State<EnhancedReportDetailScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -921,9 +922,20 @@ class _EnhancedReportDetailScreenState extends State<EnhancedReportDetailScreen>
   }
 
   void _shareReport(ReportEntity report) {
-    // Implementar sharing (copiar al portapapeles, share sheet, etc.)
+    // Implementar sharing usando el portapapeles
     final shareText = 'Denuncia FROGIO: ${report.title}\nID: ${report.id}\nEstado: ${report.status}';
-    // Share.share(shareText); // Requiere dependencia share_plus
+    
+    // Copiar al portapapeles
+    Clipboard.setData(ClipboardData(text: shareText)).then((_) {
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Información copiada al portapapeles'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+    });
   }
 
   void _openInMaps(ReportEntity report) {
@@ -959,10 +971,10 @@ class PhotoViewerScreen extends StatelessWidget {
   final int initialIndex;
 
   const PhotoViewerScreen({
-    Key? key,
+    super.key,
     required this.imageUrls,
     required this.initialIndex,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

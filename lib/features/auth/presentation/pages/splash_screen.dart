@@ -93,10 +93,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         width: 200,
                         height: 200,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.eco, // Icono de hoja como placeholder de rana
                           size: 100,
                           color: Colors.white,

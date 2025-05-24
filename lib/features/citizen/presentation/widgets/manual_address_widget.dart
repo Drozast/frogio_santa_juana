@@ -9,10 +9,10 @@ class ManualAddressWidget extends StatefulWidget {
   final Function(String) onAddressEntered;
 
   const ManualAddressWidget({
-    Key? key,
+    super.key,
     this.initialAddress,
     required this.onAddressEntered,
-  }) : super(key: key);
+  });
 
   @override
   State<ManualAddressWidget> createState() => _ManualAddressWidgetState();

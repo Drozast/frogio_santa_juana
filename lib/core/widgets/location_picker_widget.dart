@@ -76,8 +76,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            // ignore: deprecated_member_use
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -102,9 +101,9 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+                border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +177,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -237,11 +236,15 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         location.longitude,
       );
       
+      if (!mounted) return;
+      
       setState(() {
         _selectedAddress = address;
         _isLoadingAddress = false;
       });
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _isLoadingAddress = false;
       });
@@ -253,9 +256,13 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       final position = await _mapsService.getCurrentLocation();
       final location = LatLng(position.latitude, position.longitude);
       
+      if (!mounted) return;
+      
       _onLocationSelected(location);
       await _mapsService.moveToLocation(location);
     } catch (e) {
+      if (!mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al obtener ubicación: ${e.toString()}'),
@@ -301,6 +308,8 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
     try {
       final location = await _mapsService.getCoordinatesFromAddress(address);
       
+      if (!mounted) return;
+      
       if (location != null) {
         _onLocationSelected(location);
         await _mapsService.moveToLocation(location);
@@ -313,6 +322,8 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error en búsqueda: ${e.toString()}'),

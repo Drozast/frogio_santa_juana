@@ -17,12 +17,12 @@ class EnhancedStatusUpdateWidget extends StatefulWidget {
   final VoidCallback? onStatusUpdated;
 
   const EnhancedStatusUpdateWidget({
-    Key? key,
+    super.key,
     required this.report,
     required this.currentUserRole,
     required this.currentUserId,
     this.onStatusUpdated,
-  }) : super(key: key);
+  });
 
   @override
   State<EnhancedStatusUpdateWidget> createState() =>
@@ -170,7 +170,7 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withOpacity(0.1),
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(
@@ -236,7 +236,7 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _getStatusColor(widget.report.status).withOpacity(0.2),
+                  color: _getStatusColor(widget.report.status).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -316,7 +316,7 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
           const SizedBox(height: 16),
           ..._getAvailableStatuses()
               .map((status) => _buildStatusOption(status))
-              .toList(),
+              ,
           const SizedBox(height: 24),
           const Text(
             'Comentario:',
@@ -470,7 +470,7 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isSelected
-                  ? info.color.withOpacity(0.1)
+                  ? info.color.withValues(alpha: 0.1)
                   : isCurrent
                       ? Colors.grey.shade100
                       : Colors.transparent,
@@ -489,7 +489,7 @@ class _EnhancedStatusUpdateWidgetState extends State<EnhancedStatusUpdateWidget>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: info.color.withOpacity(0.2),
+                    color: info.color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(

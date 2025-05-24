@@ -67,12 +67,17 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
 
     try {
       final position = await Geolocator.getCurrentPosition();
+      
+      if (!mounted) return;
+      
       setState(() {
         _currentPosition = position;
         _address = "Ubicación actual";
         _isLoadingLocation = false;
       });
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _address = "No se pudo obtener ubicación";
         _isLoadingLocation = false;
@@ -99,6 +104,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al seleccionar imagen: ${e.toString()}'),
@@ -158,7 +165,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
               width: 150,
               height: 150,
               decoration: BoxDecoration(
-                color: AppTheme.successColor.withOpacity(0.1),
+                color: AppTheme.successColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(

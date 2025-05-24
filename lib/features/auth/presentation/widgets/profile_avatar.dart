@@ -22,11 +22,11 @@ class ProfileAvatar extends StatelessWidget {
   final bool isEditable;
 
   const ProfileAvatar({
-    Key? key,
+    super.key,
     required this.user,
     this.radius = 50,
     this.isEditable = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +36,7 @@ class ProfileAvatar extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: radius,
-              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
               child: state is ProfileImageUploading
                   ? const CircularProgressIndicator()
                   : _buildAvatarContent(),
@@ -88,7 +88,7 @@ class ProfileAvatar extends StatelessWidget {
   Widget _buildDefaultAvatar() {
     return CircleAvatar(
       radius: radius,
-      backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
+      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.2),
       child: Text(
         user.displayName.substring(0, 1).toUpperCase(),
         style: TextStyle(
@@ -139,6 +139,8 @@ class ProfileAvatar extends StatelessWidget {
       if (image != null) {
         final File imageFile = File(image.path);
         
+        if (!context.mounted) return;
+        
         // Buscar ProfileBloc en el contexto padre o crear uno nuevo
         try {
           context.read<ProfileBloc>().add(
@@ -153,6 +155,8 @@ class ProfileAvatar extends StatelessWidget {
         }
       }
     } catch (e) {
+      if (!context.mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al seleccionar imagen: ${e.toString()}'),
@@ -164,6 +168,8 @@ class ProfileAvatar extends StatelessWidget {
 
   Future<void> _uploadImageDirectly(BuildContext context, File imageFile) async {
     try {
+      if (!context.mounted) return;
+      
       // Mostrar loading
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -193,6 +199,8 @@ class ProfileAvatar extends StatelessWidget {
       
       await imageUrlResult.fold(
         (failure) async {
+          if (!context.mounted) return;
+          
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -205,10 +213,14 @@ class ProfileAvatar extends StatelessWidget {
           // Actualizar perfil con nueva URL
           final updateResult = await authRepo.updateProfileImage(user.id, imageUrl);
           
+          if (!context.mounted) return;
+          
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           
           updateResult.fold(
             (failure) {
+              if (!context.mounted) return;
+              
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Error: ${failure.message}'),
@@ -217,6 +229,8 @@ class ProfileAvatar extends StatelessWidget {
               );
             },
             (updatedUser) {
+              if (!context.mounted) return;
+              
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Imagen actualizada correctamente'),
@@ -225,14 +239,14 @@ class ProfileAvatar extends StatelessWidget {
               );
               
               // Actualizar AuthBloc
-              if (context.mounted) {
-                context.read<AuthBloc>().add(CheckAuthStatusEvent());
-              }
+              context.read<AuthBloc>().add(CheckAuthStatusEvent());
             },
           );
         },
       );
     } catch (e) {
+      if (!context.mounted) return;
+      
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

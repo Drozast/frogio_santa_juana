@@ -526,7 +526,7 @@ class _CreateReportScreenState extends State<CreateReportScreen>
                 return CustomButton(
                   text: _currentStep == 3 ? 'Enviar Denuncia' : 'Siguiente',
                   isLoading: isLoading,
-                  onPressed: isLoading ? () {} : _submitReport,
+                  onPressed: isLoading ? () {} : _currentStep == 3 ? _submitReport : _goToNextStep,
                 );
               },
             ),
@@ -545,7 +545,15 @@ class _CreateReportScreenState extends State<CreateReportScreen>
     }
   }
 
-  
+  void _goToNextStep() {
+    if (_validateCurrentStep()) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
   bool _validateCurrentStep() {
     switch (_currentStep) {
       case 0:
@@ -566,8 +574,7 @@ class _CreateReportScreenState extends State<CreateReportScreen>
   }
 
   void _submitReport() {
-    if (_selectedLocation == null) {
-      _showErrorSnackBar('Debe seleccionar una ubicación');
+    if (!_validateCurrentStep()) {
       return;
     }
 

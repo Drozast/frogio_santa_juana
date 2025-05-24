@@ -288,7 +288,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppTheme.warningColor.withOpacity(0.1),
+                              color: AppTheme.warningColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: AppTheme.warningColor),
                             ),
@@ -413,8 +413,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           // Estado del perfil
           Card(
             color: user.isProfileComplete 
-                ? AppTheme.successColor.withOpacity(0.1)
-                : AppTheme.warningColor.withOpacity(0.1),
+                ? AppTheme.successColor.withValues(alpha: 0.1)
+                : AppTheme.warningColor.withValues(alpha: 0.1),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(

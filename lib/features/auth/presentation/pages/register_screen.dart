@@ -69,7 +69,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Icono
-                      Container(
+                      const SizedBox(
                         height: 150,
                         child: Icon(
                           Icons.person_add,
@@ -204,7 +204,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ),
                                   ],
                                 );
-                              }).toList(),
+                              }),
                             ],
                           ),
                         ),
