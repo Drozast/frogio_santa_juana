@@ -361,22 +361,43 @@ Future<void> _initializeServices() async {
   logger.d('🔧 Initializing services...');
   
   try {
+    // Inicializar NotificationService con manejo de errores para web
     final notificationService = sl<NotificationService>();
-    await notificationService.initialize();
+    try {
+      await notificationService.initialize();
+      logger.d('✅ NotificationService initialized');
+    } catch (e) {
+      logger.w('⚠️ NotificationService failed to initialize (this is normal for web): $e');
+      // No relanzar el error, continuar con otros servicios
+    }
     
+    // Inicializar NotificationManager con manejo de errores
     final notificationManager = sl<NotificationManager>();
-    await notificationManager.initialize();
+    try {
+      await notificationManager.initialize();
+      logger.d('✅ NotificationManager initialized');
+    } catch (e) {
+      logger.w('⚠️ NotificationManager failed to initialize: $e');
+      // No relanzar el error, continuar con otros servicios
+    }
     
+    // Inicializar SessionTimeoutService (este debería funcionar en todas las plataformas)
     final sessionService = sl<SessionTimeoutService>();
-    sessionService.startTimer();
+    try {
+      sessionService.startTimer();
+      logger.d('✅ SessionTimeoutService initialized');
+    } catch (e) {
+      logger.e('❌ SessionTimeoutService failed to initialize: $e');
+      // Este error sí es crítico, por lo que se relanza
+      rethrow;
+    }
     
     logger.d('✅ Services initialized successfully');
   } catch (e) {
-    logger.e('❌ Error initializing services: $e');
+    logger.e('❌ Critical error initializing services: $e');
     rethrow;
   }
 }
-
 // ===== VALIDATION =====
 void _validateDependencies() {
   logger.d('🔍 Validating dependencies...');

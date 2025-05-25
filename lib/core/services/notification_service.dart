@@ -1,8 +1,8 @@
 // lib/core/services/notification_service.dart
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -30,6 +30,12 @@ class NotificationService {
   }
 
   Future<void> _initializeLocalNotifications() async {
+    // Solo inicializar notificaciones locales en plataformas móviles
+    if (kIsWeb) {
+      log('Notificaciones locales no disponibles en web');
+      return;
+    }
+
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestSoundPermission: true,
@@ -58,19 +64,25 @@ class NotificationService {
   }
 
   Future<void> _requestPermissions() async {
-    if (Platform.isIOS) {
-      await Permission.notification.request();
+    try {
+      // En web, no necesitamos permisos de Platform
+      if (!kIsWeb) {
+        // Solo usar Permission.notification en plataformas móviles
+        await Permission.notification.request();
+      }
+      
+      await _firebaseMessaging.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+    } catch (e) {
+      log('Error requesting permissions: $e');
     }
-    
-    await _firebaseMessaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
   }
 
   Future<void> _getFCMToken() async {
@@ -99,8 +111,10 @@ class NotificationService {
     final data = message.data;
     onNotificationReceived?.call(data);
     
-    // Mostrar notificación local en primer plano
-    await _showLocalNotification(message);
+    // Mostrar notificación local en primer plano solo en plataformas móviles
+    if (!kIsWeb) {
+      await _showLocalNotification(message);
+    }
   }
 
   void _handleBackgroundMessageTap(RemoteMessage message) {
@@ -126,6 +140,9 @@ class NotificationService {
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
+    // Solo funciona en plataformas móviles
+    if (kIsWeb) return;
+
     const androidDetails = AndroidNotificationDetails(
       'frogio_channel',
       'FROGIO Notifications',
@@ -205,6 +222,12 @@ class NotificationService {
     Map<String, dynamic>? data,
     String? icon,
   }) async {
+    // Solo funciona en plataformas móviles
+    if (kIsWeb) {
+      log('Custom notifications not supported on web');
+      return;
+    }
+
     final androidDetails = AndroidNotificationDetails(
       'frogio_custom',
       'FROGIO Custom',

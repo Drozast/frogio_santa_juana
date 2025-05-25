@@ -36,6 +36,11 @@ class ImageHelper {
     int? maxWidth,
     int? maxHeight,
   }) async {
+    // Solo comprimir en plataformas móviles
+    if (kIsWeb) {
+      return file;
+    }
+
     try {
       final dir = path.dirname(file.path);
       final ext = path.extension(file.path);
@@ -64,6 +69,11 @@ class ImageHelper {
 
   /// Verificar tamaño de archivo
   static Future<bool> isFileSizeValid(File file, {int? maxSizeBytes}) async {
+    if (kIsWeb) {
+      // En web, siempre retornar true o implementar lógica alternativa
+      return true;
+    }
+    
     final size = await file.length();
     return size <= (maxSizeBytes ?? maxFileSize);
   }

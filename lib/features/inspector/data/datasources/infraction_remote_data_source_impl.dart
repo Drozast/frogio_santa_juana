@@ -148,13 +148,15 @@ class InfractionRemoteDataSourceImpl implements InfractionRemoteDataSource {
       final fileName = 'evidence_${DateTime.now().millisecondsSinceEpoch}${path.extension(image.path)}';
       final storagePath = 'infractions/$infractionId/evidence/$fileName';
       
-      // Comprimir imagen
+      // Comprimir imagen solo si no estamos en web
       File imageToUpload = image;
-      try {
-        imageToUpload = await _compressImage(image);
-      } catch (e) {
-        // Si falla la compresión, usar la original
-        imageToUpload = image;
+      if (!kIsWeb) {
+        try {
+          imageToUpload = await _compressImage(image);
+        } catch (e) {
+          // Si falla la compresión, usar la original
+          imageToUpload = image;
+        }
       }
       
       // Subir archivo
@@ -222,13 +224,15 @@ class InfractionRemoteDataSourceImpl implements InfractionRemoteDataSource {
         final fileName = 'evidence_${i}_${DateTime.now().millisecondsSinceEpoch}${path.extension(file.path)}';
         final storagePath = 'infractions/$infractionId/evidence/$fileName';
         
-        // Comprimir imagen
+        // Comprimir imagen solo si no estamos en web
         File imageToUpload = file;
-        try {
-          imageToUpload = await _compressImage(file);
-        } catch (e) {
-          // Si falla la compresión, usar la original
-          imageToUpload = file;
+        if (!kIsWeb) {
+          try {
+            imageToUpload = await _compressImage(file);
+          } catch (e) {
+            // Si falla la compresión, usar la original
+            imageToUpload = file;
+          }
         }
         
         // Subir archivo
@@ -352,6 +356,11 @@ class InfractionRemoteDataSourceImpl implements InfractionRemoteDataSource {
   // Métodos auxiliares privados
 
   Future<File> _compressImage(File file) async {
+    // Solo comprimir si no estamos en web
+    if (kIsWeb) {
+      return file;
+    }
+
     try {
       final dir = path.dirname(file.path);
       final ext = path.extension(file.path);
