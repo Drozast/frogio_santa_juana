@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:frogio_santa_juana/features/vehicles/domain/entities/vehicle_log_entity.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/error/failures.dart';

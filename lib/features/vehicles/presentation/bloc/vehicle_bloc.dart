@@ -5,6 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/vehicle_entity.dart';
+import '../../domain/entities/vehicle_log_entity.dart';
 import '../../domain/usecases/end_vehicle_usage.dart';
 import '../../domain/usecases/get_vehicles.dart';
 import '../../domain/usecases/start_vehicle_usage.dart';
@@ -387,7 +388,7 @@ class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
     }
     
     try {
-      final result = await getVehicles(event.muniId);
+      final result = await getVehicles(GetVehiclesParams(muniId: event.muniId));
       
       result.fold(
         (failure) => emit(VehicleError(message: failure.message)),
@@ -429,7 +430,7 @@ class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
     emit(const VehicleLoading(message: 'Cargando vehículos...'));
     
     try {
-      final result = await getVehicles(event.muniId);
+      final result = await getVehicles(GetVehiclesParams(muniId: event.muniId));
       
       result.fold(
         (failure) => emit(VehicleError(message: failure.message)),

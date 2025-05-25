@@ -222,7 +222,7 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
     FilterStatisticsByDateEvent event,
     Emitter<StatisticsState> emit,
   ) async {
-    // TODO: Implementar filtrado por fecha
+    // TODO: Implementar filtrado por fecha en el repository/use case
     // Por ahora solo recargar las estadísticas
     if (state is StatisticsLoaded) {
       final currentState = state as StatisticsLoaded;
@@ -270,7 +270,7 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
       
       await Future.delayed(const Duration(milliseconds: 300));
       
-      // TODO: Implementar exportación real
+      // TODO: Implementar exportación real con el repository
       final fileName = _generateFileName(event.exportType, event.startDate, event.endDate);
       
       emit(StatisticsExported(
@@ -332,10 +332,10 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
     if (startDate != null && endDate != null) {
       final startStr = '${startDate.year}${startDate.month.toString().padLeft(2, '0')}${startDate.day.toString().padLeft(2, '0')}';
       final endStr = '${endDate.year}${endDate.month.toString().padLeft(2, '0')}${endDate.day.toString().padLeft(2, '0')}';
-      dateRange = '_${startStr}_${endStr}';
+      dateRange = '_${startStr}_$endStr';
     }
     
-    return '${typeStr}_${dateStr}${dateRange}.csv';
+    return '${typeStr}_$dateStr$dateRange.csv';
   }
 }
 

@@ -62,8 +62,8 @@ import '../features/inspector/presentation/bloc/infraction_bloc.dart';
 // Vehicles Feature
 import '../features/vehicles/data/datasources/vehicle_remote_data_source.dart';
 import '../features/vehicles/data/datasources/vehicle_remote_data_source_impl.dart';
+import '../features/vehicles/data/repositories/vehicle_repository.dart';
 import '../features/vehicles/data/repositories/vehicle_repository_impl.dart';
-import '../features/vehicles/domain/repositories/vehicle_repository.dart';
 import '../features/vehicles/domain/usecases/end_vehicle_usage.dart';
 import '../features/vehicles/domain/usecases/get_vehicles.dart';
 import '../features/vehicles/domain/usecases/start_vehicle_usage.dart';

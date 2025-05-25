@@ -1,11 +1,11 @@
 // lib/features/vehicles/domain/usecases/start_vehicle_usage.dart
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
+import 'package:frogio_santa_juana/features/vehicles/domain/entities/vehicle_log_entity.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
-import '../entities/vehicle_entity.dart';
-import '../repositories/vehicle_repository.dart';
+import '../../data/repositories/vehicle_repository.dart';
 
 class StartVehicleUsage extends UseCase<String, StartVehicleUsageParams> {
   final VehicleRepository repository;

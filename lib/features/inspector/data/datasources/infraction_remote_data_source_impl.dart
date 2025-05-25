@@ -1,4 +1,5 @@
 // lib/features/inspector/data/datasources/infraction_remote_data_source_impl.dart
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -10,6 +11,7 @@ import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../domain/entities/infraction_entity.dart';
 import '../models/infraction_model.dart';
 import 'infraction_remote_data_source.dart';
 
@@ -63,57 +65,49 @@ class InfractionRemoteDataSourceImpl implements InfractionRemoteDataSource {
   }
 
   @override
-  Future<String> createInfraction({
-    required String title,
-    required String description,
-    required String ordinanceRef,
-    required LocationDataModel location,
-    required String offenderId,
-    required String offenderName,
-    required String offenderDocument,
-    required String inspectorId,
-    required List<File> evidence,
-  }) async {
+  Future<InfractionModel> createInfraction(InfractionModel infraction) async {
     try {
       final infractionId = uuid.v4();
       final now = DateTime.now();
       
-      // Subir evidencia primero
-      List<String> evidenceUrls = [];
-      if (evidence.isNotEmpty) {
-        evidenceUrls = await uploadInfractionImages(evidence, infractionId);
-      }
-
-      final infractionData = InfractionModel(
+      final infractionData = infraction.copyWith(
         id: infractionId,
-        title: title,
-        description: description,
-        ordinanceRef: ordinanceRef,
-        location: location.toMap(),
-        offenderId: offenderId,
-        offenderName: offenderName,
-        offenderDocument: offenderDocument,
-        inspectorId: inspectorId,
-        muniId: '', // Debería obtenerse del contexto del usuario
-        evidence: evidenceUrls,
-        signatures: [],
-        status: 'created',
         createdAt: now,
         updatedAt: now,
-        historyLog: [{
-          'timestamp': now,
-          'status': 'created',
-          'comment': 'Infracción creada',
-          'userId': inspectorId,
-          'userName': 'Inspector',
-        }],
+        historyLog: [
+          {
+            'timestamp': now,
+            'status': infraction.status,
+            'comment': 'Infracción creada',
+            'userId': infraction.inspectorId,
+            'userName': 'Inspector',
+          }
+        ],
       );
 
       await firestore.collection('infractions').doc(infractionId).set(infractionData.toJson());
 
-      return infractionId;
+      return infractionData;
     } catch (e) {
       throw ServerFailure('Error al crear infracción: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<InfractionModel> updateInfraction(InfractionModel infraction) async {
+    try {
+      final updatedInfraction = infraction.copyWith(
+        updatedAt: DateTime.now(),
+      );
+
+      await firestore
+          .collection('infractions')
+          .doc(infraction.id)
+          .update(updatedInfraction.toJson());
+
+      return updatedInfraction;
+    } catch (e) {
+      throw ServerFailure('Error al actualizar infracción: ${e.toString()}');
     }
   }
 
@@ -145,6 +139,52 @@ class InfractionRemoteDataSourceImpl implements InfractionRemoteDataSource {
       });
     } catch (e) {
       throw ServerFailure('Error al actualizar estado: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<String> uploadEvidenceImage(String infractionId, File image) async {
+    try {
+      final fileName = 'evidence_${DateTime.now().millisecondsSinceEpoch}${path.extension(image.path)}';
+      final storagePath = 'infractions/$infractionId/evidence/$fileName';
+      
+      // Comprimir imagen
+      File imageToUpload = image;
+      try {
+        imageToUpload = await _compressImage(image);
+      } catch (e) {
+        // Si falla la compresión, usar la original
+        imageToUpload = image;
+      }
+      
+      // Subir archivo
+      final storageRef = storage.ref().child(storagePath);
+      final uploadTask = await storageRef.putFile(imageToUpload);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      
+      return downloadUrl;
+    } catch (e) {
+      throw ServerFailure('Error al subir imagen de evidencia: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<String> uploadSignature(String infractionId, String signatureData) async {
+    try {
+      final fileName = 'signature_${DateTime.now().millisecondsSinceEpoch}.png';
+      final storagePath = 'infractions/$infractionId/signatures/$fileName';
+      
+      // Convertir datos de firma a bytes (asumiendo que es base64)
+      final bytes = base64Decode(signatureData);
+      
+      // Subir archivo
+      final storageRef = storage.ref().child(storagePath);
+      final uploadTask = await storageRef.putData(bytes);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      
+      return downloadUrl;
+    } catch (e) {
+      throw ServerFailure('Error al subir firma: ${e.toString()}');
     }
   }
 
@@ -202,18 +242,6 @@ class InfractionRemoteDataSourceImpl implements InfractionRemoteDataSource {
       return urls;
     } catch (e) {
       throw ServerFailure('Error al subir imágenes: ${e.toString()}');
-    }
-  }
-
-  @override
-  Future<void> addSignature(String infractionId, String signatureUrl) async {
-    try {
-      await firestore.collection('infractions').doc(infractionId).update({
-        'signatures': FieldValue.arrayUnion([signatureUrl]),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      throw ServerFailure('Error al agregar firma: ${e.toString()}');
     }
   }
 
@@ -371,4 +399,67 @@ extension DoubleExtensions on double {
   double cos() => math.cos(this);
   double sqrt() => math.sqrt(this);
   double asin() => math.asin(this);
+}
+
+// Clase auxiliar para manejo de datos de ubicación
+class LocationDataModel {
+  final double latitude;
+  final double longitude;
+  final String? address;
+  final String city;
+  final String region;
+  final String country;
+
+  const LocationDataModel({
+    required this.latitude,
+    required this.longitude,
+    this.address,
+    required this.city,
+    required this.region,
+    required this.country,
+  });
+
+  factory LocationDataModel.fromEntity(LocationData entity) {
+    return LocationDataModel(
+      latitude: entity.latitude,
+      longitude: entity.longitude,
+      address: entity.address,
+      city: entity.city,
+      region: entity.region,
+      country: entity.country,
+    );
+  }
+
+  factory LocationDataModel.fromMap(Map<String, dynamic> map) {
+    return LocationDataModel(
+      latitude: (map['latitude'] ?? 0).toDouble(),
+      longitude: (map['longitude'] ?? 0).toDouble(),
+      address: map['address'],
+      city: map['city'] ?? '',
+      region: map['region'] ?? '',
+      country: map['country'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'latitude': latitude,
+      'longitude': longitude,
+      'address': address,
+      'city': city,
+      'region': region,
+      'country': country,
+    };
+  }
+
+  LocationData toEntity() {
+    return LocationData(
+      latitude: latitude,
+      longitude: longitude,
+      address: address,
+      city: city,
+      region: region,
+      country: country,
+    );
+  }
 }

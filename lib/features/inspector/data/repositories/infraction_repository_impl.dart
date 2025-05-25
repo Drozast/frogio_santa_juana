@@ -52,7 +52,7 @@ class InfractionRepositoryImpl implements InfractionRepository {
     try {
       // Crear el modelo de infracción
       final model = InfractionModel(
-        id: '', // Se generará en el backend
+        id: '', // Se generará en el data source
         title: title,
         description: description,
         ordinanceRef: ordinanceRef,
@@ -62,12 +62,12 @@ class InfractionRepositoryImpl implements InfractionRepository {
         offenderDocument: offenderDocument,
         inspectorId: inspectorId,
         muniId: '', // Debería venir del contexto del usuario
-        evidence: [], // Se subirán después
-        signatures: [],
+        evidence: const [], // Se subirán después
+        signatures: const [],
         status: InfractionStatus.created.name,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        historyLog: [],
+        historyLog: const [],
       );
 
       final createdInfraction = await remoteDataSource.createInfraction(model);

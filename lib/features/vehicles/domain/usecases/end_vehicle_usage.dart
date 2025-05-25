@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
-import '../repositories/vehicle_repository.dart';
+import '../../data/repositories/vehicle_repository.dart';
 
 class EndVehicleUsage extends UseCase<void, EndVehicleUsageParams> {
   final VehicleRepository repository;

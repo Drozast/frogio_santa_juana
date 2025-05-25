@@ -67,7 +67,7 @@ class InfractionBloc extends Bloc<InfractionEvent, InfractionState> {
           offenderName: event.infraction.offenderName,
           offenderDocument: event.infraction.offenderDocument,
           inspectorId: event.infraction.inspectorId,
-          evidence: [], // Agregar evidencia si es necesario
+          evidence: const [], // Agregar evidencia si es necesario
         ),
       );
 

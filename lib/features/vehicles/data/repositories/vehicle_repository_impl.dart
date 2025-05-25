@@ -1,10 +1,12 @@
 // lib/features/vehicles/data/repositories/vehicle_repository_impl.dart
 import 'package:dartz/dartz.dart';
+import 'package:frogio_santa_juana/features/vehicles/data/datasources/vehicle_remote_data_source.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/vehicle_entity.dart';
-import '../../domain/repositories/vehicle_repository.dart';
-import '../datasources/vehicle_remote_data_source.dart';
+import '../../domain/entities/vehicle_log_entity.dart';
+import 'vehicle_repository.dart';
+
 
 class VehicleRepositoryImpl implements VehicleRepository {
   final VehicleRemoteDataSource remoteDataSource;

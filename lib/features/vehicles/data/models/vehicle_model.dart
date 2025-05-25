@@ -2,6 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../domain/entities/vehicle_entity.dart';
+import '../../domain/entities/vehicle_log_entity.dart';
 
 class VehicleModel extends VehicleEntity {
   const VehicleModel({

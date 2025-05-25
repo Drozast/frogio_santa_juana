@@ -2,8 +2,8 @@
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failures.dart';
-import '../entities/vehicle_entity.dart';
-import '../entities/vehicle_log_entity.dart';
+import '../../domain/entities/vehicle_entity.dart';
+import '../../domain/entities/vehicle_log_entity.dart';
 
 abstract class VehicleRepository {
   /// Obtiene la lista de vehículos

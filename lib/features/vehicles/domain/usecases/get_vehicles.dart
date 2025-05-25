@@ -3,8 +3,8 @@ import 'package:equatable/equatable.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
+import '../../data/repositories/vehicle_repository.dart';
 import '../entities/vehicle_entity.dart';
-import '../repositories/vehicle_repository.dart';
 
 class GetVehicles extends UseCase<List<VehicleEntity>, GetVehiclesParams> {
   final VehicleRepository repository;
