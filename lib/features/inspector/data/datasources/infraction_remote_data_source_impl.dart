@@ -63,38 +63,57 @@ class InfractionRemoteDataSourceImpl implements InfractionRemoteDataSource {
   }
 
   @override
-  Future<InfractionModel> createInfraction(InfractionModel infraction) async {
+  Future<String> createInfraction({
+    required String title,
+    required String description,
+    required String ordinanceRef,
+    required LocationDataModel location,
+    required String offenderId,
+    required String offenderName,
+    required String offenderDocument,
+    required String inspectorId,
+    required List<File> evidence,
+  }) async {
     try {
       final infractionId = uuid.v4();
+      final now = DateTime.now();
       
-      final infractionData = infraction.copyWith(
+      // Subir evidencia primero
+      List<String> evidenceUrls = [];
+      if (evidence.isNotEmpty) {
+        evidenceUrls = await uploadInfractionImages(evidence, infractionId);
+      }
+
+      final infractionData = InfractionModel(
         id: infractionId,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        title: title,
+        description: description,
+        ordinanceRef: ordinanceRef,
+        location: location.toMap(),
+        offenderId: offenderId,
+        offenderName: offenderName,
+        offenderDocument: offenderDocument,
+        inspectorId: inspectorId,
+        muniId: '', // Debería obtenerse del contexto del usuario
+        evidence: evidenceUrls,
+        signatures: [],
+        status: 'created',
+        createdAt: now,
+        updatedAt: now,
+        historyLog: [{
+          'timestamp': now,
+          'status': 'created',
+          'comment': 'Infracción creada',
+          'userId': inspectorId,
+          'userName': 'Inspector',
+        }],
       );
 
       await firestore.collection('infractions').doc(infractionId).set(infractionData.toJson());
 
-      return infractionData;
+      return infractionId;
     } catch (e) {
       throw ServerFailure('Error al crear infracción: ${e.toString()}');
-    }
-  }
-
-  @override
-  Future<InfractionModel> updateInfraction(InfractionModel infraction) async {
-    try {
-      await firestore
-          .collection('infractions')
-          .doc(infraction.id)
-          .update({
-            ...infraction.toJson(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-
-      return infraction;
-    } catch (e) {
-      throw ServerFailure('Error al actualizar infracción: ${e.toString()}');
     }
   }
 
@@ -130,50 +149,6 @@ class InfractionRemoteDataSourceImpl implements InfractionRemoteDataSource {
   }
 
   @override
-  Future<String> uploadEvidenceImage(String infractionId, File image) async {
-    try {
-      final fileName = path.basename(image.path);
-      final fileId = uuid.v4();
-      final storagePath = 'infractions/$infractionId/$fileId-$fileName';
-      
-      // Comprimir imagen
-      File imageToUpload = image;
-      try {
-        imageToUpload = await _compressImage(image);
-      } catch (e) {
-        // Si falla la compresión, usar la original
-        imageToUpload = image;
-      }
-      
-      // Subir archivo
-      final storageRef = storage.ref().child(storagePath);
-      final uploadTask = await storageRef.putFile(imageToUpload);
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
-      
-      return downloadUrl;
-    } catch (e) {
-      throw ServerFailure('Error al subir imagen: ${e.toString()}');
-    }
-  }
-
-  @override
-  Future<String> uploadSignature(String infractionId, String signatureData) async {
-    try {
-      final fileName = 'signature_${DateTime.now().millisecondsSinceEpoch}.png';
-      final ref = storage.ref().child('infractions/$infractionId/signatures/$fileName');
-      
-      // Convertir base64 a bytes y subir
-      final bytes = Uri.parse(signatureData).data!.contentAsBytes();
-      final uploadTask = await ref.putData(bytes);
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
-
-      return downloadUrl;
-    } catch (e) {
-      throw ServerFailure('Error al subir firma: ${e.toString()}');
-    }
-  }
-
-  @override
   Future<void> deleteInfraction(String infractionId) async {
     try {
       // Eliminar archivos de storage
@@ -202,14 +177,43 @@ class InfractionRemoteDataSourceImpl implements InfractionRemoteDataSource {
     try {
       final List<String> urls = [];
       
-      for (File image in images) {
-        final url = await uploadEvidenceImage(infractionId, image);
-        urls.add(url);
+      for (int i = 0; i < images.length; i++) {
+        final file = images[i];
+        final fileName = 'evidence_${i}_${DateTime.now().millisecondsSinceEpoch}${path.extension(file.path)}';
+        final storagePath = 'infractions/$infractionId/evidence/$fileName';
+        
+        // Comprimir imagen
+        File imageToUpload = file;
+        try {
+          imageToUpload = await _compressImage(file);
+        } catch (e) {
+          // Si falla la compresión, usar la original
+          imageToUpload = file;
+        }
+        
+        // Subir archivo
+        final storageRef = storage.ref().child(storagePath);
+        final uploadTask = await storageRef.putFile(imageToUpload);
+        final downloadUrl = await uploadTask.ref.getDownloadURL();
+        
+        urls.add(downloadUrl);
       }
       
       return urls;
     } catch (e) {
       throw ServerFailure('Error al subir imágenes: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> addSignature(String infractionId, String signatureUrl) async {
+    try {
+      await firestore.collection('infractions').doc(infractionId).update({
+        'signatures': FieldValue.arrayUnion([signatureUrl]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw ServerFailure('Error al agregar firma: ${e.toString()}');
     }
   }
 

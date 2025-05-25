@@ -267,7 +267,6 @@ Future<void> _initInspectorFeature() async {
   
   logger.d('✅ Inspector feature registered');
 }
-
 // ===== ADMIN FEATURE =====
 import 'package:equatable/equatable.dart';
 
@@ -577,46 +576,37 @@ class UserStatistics extends Equatable {
 }
 
 // ===== VEHICLES FEATURE =====
-Future<void> _initAdminFeature() async {
-  logger.d('👔 Initializing Admin feature...');
+Future<void> _initVehiclesFeature() async {
+  logger.d('🚗 Initializing Vehicles feature...');
 
   // BLoCs
   sl.registerFactory(
-    () => UserManagementBloc(
-      getAllUsers: sl(),
-      updateUserRole: sl(),
-    ),
-  );
-
-  sl.registerFactory(
-    () => StatisticsBloc(
-      getMunicipalStatistics: sl(),
+    () => VehicleBloc(
+      getVehicles: sl(),
+      startVehicleUsage: sl(),
+      endVehicleUsage: sl(),
     ),
   );
 
   // Use Cases
-  sl.registerLazySingleton(() => GetAllPendingQueries(sl()));
-  sl.registerLazySingleton(() => AnswerQuery(sl()));
-  sl.registerLazySingleton(() => GetMunicipalStatistics(sl()));
-  sl.registerLazySingleton(() => GetAllUsers(sl()));
-  sl.registerLazySingleton(() => UpdateUserRole(sl()));
-  sl.registerLazySingleton(() => ActivateUser(sl()));
-  sl.registerLazySingleton(() => DeactivateUser(sl()));
+  sl.registerLazySingleton(() => GetVehicles(sl()));
+  sl.registerLazySingleton(() => StartVehicleUsage(repository: sl()));
+  sl.registerLazySingleton(() => EndVehicleUsage(repository: sl()));
 
   // Repository
-  sl.registerLazySingleton<AdminRepository>(
-    () => AdminRepositoryImpl(remoteDataSource: sl()),
+  sl.registerLazySingleton<VehicleRepository>(
+    () => VehicleRepositoryImpl(remoteDataSource: sl()),
   );
 
   // Data Sources
-  sl.registerLazySingleton<AdminRemoteDataSource>(
-    () => AdminRemoteDataSourceImpl(
+  sl.registerLazySingleton<VehicleRemoteDataSource>(
+    () => VehicleRemoteDataSourceImpl(
       firestore: sl(),
-      storage: sl(),
+      uuid: sl(),
     ),
   );
   
-  logger.d('✅ Admin feature registered');
+  logger.d('✅ Vehicles feature registered');
 }
 // ===== DASHBOARD FEATURE =====
 Future<void> _initDashboardFeature() async {
