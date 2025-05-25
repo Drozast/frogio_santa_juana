@@ -1,6 +1,7 @@
+// lib/features/admin/data/models/user_model.dart
 import 'package:equatable/equatable.dart';
 
-import '../../../auth/domain/entities/user_entity.dart';
+import '../../domain/entities/user_entity.dart';
 
 class UserModel extends Equatable {
   final String id;
@@ -60,12 +61,25 @@ class UserModel extends Equatable {
   UserEntity toEntity() {
     return UserEntity(
       id: id,
-      name: name,
       email: email,
+      displayName: name,
+      firstName: null,
+      lastName: null,
       role: role,
       muniId: muniId,
+      muniName: null,
+      isActive: isActive,
+      isEmailVerified: true, // Valor por defecto
+      phoneNumber: null,
+      address: null,
       profileImageUrl: profileImageUrl,
-      createdAt: null, // Aquí parece que faltaba una coma para separar el argumento
+      createdAt: createdAt, // CORREGIDO: usar createdAt del modelo
+      updatedAt: updatedAt ?? createdAt, // CORREGIDO: usar updatedAt o createdAt como fallback
+      lastLoginAt: null,
+      permissions: UserPermissions.fromRole(role),
+      statistics: UserStatistics.empty(),
+      assignedAreas: const [],
+      preferences: null,
     );
   }
 
