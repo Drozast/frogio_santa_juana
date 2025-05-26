@@ -46,7 +46,8 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () {
-                _reportBloc.add(RefreshReportsEvent(userId: widget.userId));
+                // ✅ CORREGIDO: Usar LoadReportsEvent en lugar de RefreshReportsEvent
+                _reportBloc.add(LoadReportsEvent(userId: widget.userId));
               },
             ),
           ],
@@ -113,7 +114,8 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        _reportBloc.add(RefreshReportsEvent(userId: widget.userId));
+        // ✅ CORREGIDO: Usar LoadReportsEvent en lugar de RefreshReportsEvent
+        _reportBloc.add(LoadReportsEvent(userId: widget.userId));
       },
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -170,8 +172,8 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
     );
 
     if (result == true) {
-      // Recargar la lista si se creó un reporte
-      _reportBloc.add(RefreshReportsEvent(userId: widget.userId));
+      // ✅ CORREGIDO: Usar LoadReportsEvent para recargar después de crear
+      _reportBloc.add(LoadReportsEvent(userId: widget.userId));
     }
   }
 

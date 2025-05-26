@@ -1,33 +1,69 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="FROGIO">
+  <meta name="description" content="FROGIO Santa Juana">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="FROGIO">
+  <meta name="apple-mobile-web-app-title" content="frogio_santa_juana">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
   <link rel="icon" type="image/png" href="favicon.png"/>
-  <title>FROGIO</title>
+  <title>FROGIO Santa Juana</title>
   <link rel="manifest" href="manifest.json">
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
+  
+  <style>
+    /* Loading styles */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+    #loading {
+      align-items: center;
+      display: flex;
+      height: 100%;
+      justify-content: center;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
+  <!-- Loading indicator -->
+  <div id="loading" class="loading">
+    <div>Cargando FROGIO...</div>
+  </div>
+  
+  <!-- Google Maps JavaScript API -->
   <script>
-    const firebaseConfig = {
-      apiKey: 'AIzaSyBZd3_krKkXx-S33Sg3XZ78i5UQBOGQCTA',
-      authDomain: 'frogio-201f9.firebaseapp.com',
-      projectId: 'frogio-201f9',
-      storageBucket: 'frogio-201f9.firebasestorage.app',
-      messagingSenderId: '729189223627',
-      appId: '1:729189223627:web:187faa2b27d5439c2e9f4e',
-      measurementId: 'G-YV6JDQ3DP7',
-    };
-    firebase.initializeApp(firebaseConfig);
+    function initMap() {
+      // Esta función se llama cuando Google Maps está listo
+      console.log('Google Maps API cargada');
+    }
   </script>
-  <script src="flutter_bootstrap.js" async></script>
+  <script async defer 
+    src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI&callback=initMap&libraries=places">
+  </script>
+  
+  <script>
+    window.addEventListener('load', function(ev) {
+      // Download main.dart.js
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+  </script>
+  
+  <script src="flutter.js" defer></script>
 </body>
 </html>
