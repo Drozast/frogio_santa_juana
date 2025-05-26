@@ -17,7 +17,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
   ReportBloc({
     required this.getReportsByUser,
     required this.getReportById,
-    required this.createReport,
+    required this.createReport, required Object addReportResponse,
   }) : super(ReportInitial()) {
     on<LoadReportsEvent>(_onLoadReports);
     on<LoadReportDetailsEvent>(_onLoadReportDetails);

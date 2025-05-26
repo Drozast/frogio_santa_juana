@@ -49,7 +49,6 @@ import '../features/citizen/data/repositories/enhanced_report_repository_impl.da
 import '../features/citizen/domain/repositories/enhanced_report_repository.dart';
 import '../features/citizen/domain/usecases/reports/enhanced_report_use_cases.dart';
 import '../features/citizen/presentation/bloc/report/enhanced_report_bloc.dart';
-import '../features/citizen/presentation/bloc/report/report_bloc.dart';
 // Inspector Feature
 import '../features/inspector/data/datasources/infraction_remote_data_source.dart';
 import '../features/inspector/data/datasources/infraction_remote_data_source_impl.dart';
@@ -186,7 +185,7 @@ Future<void> _initAuthFeature() async {
 }
 
 // ===== CITIZEN FEATURE (ENHANCED) =====
-FFuture<void> _initCitizenFeature() async {
+Future<void> _initCitizenFeature() async {
   logger.d('👤 Initializing Citizen feature...');
 
   // Registrar el BLoC simple (sin enhanced)
