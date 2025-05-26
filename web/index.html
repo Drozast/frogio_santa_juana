@@ -37,15 +37,25 @@
     <div>Cargando FROGIO...</div>
   </div>
   
-  <!-- Google Maps JavaScript API -->
+  <!-- IMPORTANTE: Reemplaza TU_API_KEY_REAL con tu API key real de Google Maps -->
   <script>
-    function initMap() {
-      // Esta función se llama cuando Google Maps está listo
-      console.log('Google Maps API cargada');
+    // Función de callback para cuando Google Maps esté listo
+    window.initGoogleMaps = function() {
+      console.log('Google Maps API cargada correctamente');
+      window.googleMapsLoaded = true;
+    }
+    
+    // Función de error para Google Maps
+    window.gm_authFailure = function() {
+      console.error('Error de autenticación con Google Maps API');
+      window.googleMapsError = true;
     }
   </script>
+  
+  <!-- Google Maps JavaScript API con tu API key real -->
   <script async defer 
-    src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI&callback=initMap&libraries=places">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQ81wHnGrU_rbPUXE__OhNm-h2iB8Hbeo&callback=initGoogleMaps&libraries=places"
+    onerror="window.googleMapsError = true;">
   </script>
   
   <script>
