@@ -19,7 +19,7 @@ class ReportRepositoryImpl implements ReportRepository {
       final reports = await remoteDataSource.getReportsByUser(userId);
       return Right(reports);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure('Error al obtener reportes: ${e.toString()}'));
     }
   }
 
@@ -29,37 +29,28 @@ class ReportRepositoryImpl implements ReportRepository {
       final report = await remoteDataSource.getReportById(reportId);
       return Right(report);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure('Error al obtener reporte: ${e.toString()}'));
     }
   }
 
   @override
   Future<Either<Failure, String>> createReport(CreateReportParams params) async {
     try {
-      final reportId = await remoteDataSource.createReport(params);
+      final reportParams = CreateReportParams(
+        title: params.title,
+        description: params.description,
+        category: params.category,
+        references: params.references,
+        location: params.location,
+        userId: params.userId,
+        priority: params.priority,
+        attachments: params.attachments,
+      );
+      
+      final reportId = await remoteDataSource.createReport(reportParams);
       return Right(reportId);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, void>> updateReport(String reportId, UpdateReportParams params) async {
-    try {
-      await remoteDataSource.updateReport(reportId, params);
-      return const Right(null);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, void>> deleteReport(String reportId) async {
-    try {
-      await remoteDataSource.deleteReport(reportId);
-      return const Right(null);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure('Error al crear reporte: ${e.toString()}'));
     }
   }
 
@@ -79,7 +70,7 @@ class ReportRepositoryImpl implements ReportRepository {
       );
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure('Error al actualizar estado: ${e.toString()}'));
     }
   }
 
@@ -90,7 +81,7 @@ class ReportRepositoryImpl implements ReportRepository {
     required String responderName,
     required String message,
     List<File>? attachments,
-    bool isPublic = true,
+    required bool isPublic,
   }) async {
     try {
       await remoteDataSource.addResponse(
@@ -103,25 +94,7 @@ class ReportRepositoryImpl implements ReportRepository {
       );
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<MediaAttachment>>> uploadMedia({
-    required String reportId,
-    required List<File> files,
-    required MediaType type,
-  }) async {
-    try {
-      final attachments = await remoteDataSource.uploadMedia(
-        reportId: reportId,
-        files: files,
-        type: type,
-      );
-      return Right(attachments);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure('Error al agregar respuesta: ${e.toString()}'));
     }
   }
 
@@ -139,43 +112,7 @@ class ReportRepositoryImpl implements ReportRepository {
       );
       return Right(reports);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<ReportEntity>>> getReportsByCategory(
-    String category, {
-    String? muniId,
-  }) async {
-    try {
-      final reports = await remoteDataSource.getReportsByCategory(
-        category,
-        muniId: muniId,
-      );
-      return Right(reports);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<ReportEntity>>> getReportsByLocation({
-    required double latitude,
-    required double longitude,
-    required double radiusKm,
-    String? muniId,
-  }) async {
-    try {
-      final reports = await remoteDataSource.getReportsByLocation(
-        latitude: latitude,
-        longitude: longitude,
-        radiusKm: radiusKm,
-        muniId: muniId,
-      );
-      return Right(reports);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure('Error al obtener reportes por estado: ${e.toString()}'));
     }
   }
 
@@ -193,17 +130,7 @@ class ReportRepositoryImpl implements ReportRepository {
       );
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, Map<String, int>>> getReportStatistics(String muniId) async {
-    try {
-      final stats = await remoteDataSource.getReportStatistics(muniId);
-      return Right(stats);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure('Error al asignar reporte: ${e.toString()}'));
     }
   }
 
@@ -216,4 +143,27 @@ class ReportRepositoryImpl implements ReportRepository {
   Stream<List<ReportEntity>> watchReportsByStatus(ReportStatus status, String muniId) {
     return remoteDataSource.watchReportsByStatus(status, muniId);
   }
+}
+
+// Clase auxiliar para parámetros de creación (debe coincidir con los use cases)
+class CreateReportParams {
+  final String title;
+  final String description;
+  final String category;
+  final String? references;
+  final LocationData location;
+  final String userId;
+  final Priority priority;
+  final List<File> attachments;
+
+  const CreateReportParams({
+    required this.title,
+    required this.description,
+    required this.category,
+    this.references,
+    required this.location,
+    required this.userId,
+    required this.priority,
+    required this.attachments,
+  });
 }

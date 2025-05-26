@@ -7,14 +7,16 @@ import '../../../../core/error/failures.dart';
 import '../entities/enhanced_report_entity.dart';
 
 abstract class ReportRepository {
-  // CRUD básico
+  /// Obtiene todos los reportes de un usuario
   Future<Either<Failure, List<ReportEntity>>> getReportsByUser(String userId);
-  Future<Either<Failure, ReportEntity>> getReportById(String reportId);
-  Future<Either<Failure, String>> createReport(CreateReportParams params);
-  Future<Either<Failure, void>> updateReport(String reportId, UpdateReportParams params);
-  Future<Either<Failure, void>> deleteReport(String reportId);
   
-  // Gestión de estado
+  /// Obtiene un reporte específico por ID
+  Future<Either<Failure, ReportEntity>> getReportById(String reportId);
+  
+  /// Crea un nuevo reporte
+  Future<Either<Failure, String>> createReport(CreateReportParams params);
+  
+  /// Actualiza el estado de un reporte
   Future<Either<Failure, void>> updateReportStatus({
     required String reportId,
     required ReportStatus status,
@@ -22,57 +24,38 @@ abstract class ReportRepository {
     required String userId,
   });
   
-  // Respuestas
+  /// Añade una respuesta a un reporte
   Future<Either<Failure, void>> addResponse({
     required String reportId,
     required String responderId,
     required String responderName,
     required String message,
     List<File>? attachments,
-    bool isPublic = true,
+    required bool isPublic,
   });
   
-  // Media
-  Future<Either<Failure, List<MediaAttachment>>> uploadMedia({
-    required String reportId,
-    required List<File> files,
-    required MediaType type,
-  });
-  
-  // Consultas para inspectores/administradores
+  /// Obtiene reportes filtrados por estado
   Future<Either<Failure, List<ReportEntity>>> getReportsByStatus(
     ReportStatus status, {
     String? muniId,
     String? assignedTo,
   });
   
-  Future<Either<Failure, List<ReportEntity>>> getReportsByCategory(
-    String category, {
-    String? muniId,
-  });
-  
-  Future<Either<Failure, List<ReportEntity>>> getReportsByLocation({
-    required double latitude,
-    required double longitude,
-    required double radiusKm,
-    String? muniId,
-  });
-  
-  // Asignación
+  /// Asigna un reporte a un inspector
   Future<Either<Failure, void>> assignReport({
     required String reportId,
     required String assignedToId,
     required String assignedById,
   });
   
-  // Estadísticas
-  Future<Either<Failure, Map<String, int>>> getReportStatistics(String muniId);
-  
-  // Stream para tiempo real
+  /// Stream de reportes de un usuario en tiempo real
   Stream<List<ReportEntity>> watchReportsByUser(String userId);
+  
+  /// Stream de reportes por estado en tiempo real
   Stream<List<ReportEntity>> watchReportsByStatus(ReportStatus status, String muniId);
 }
 
+// Clase para parámetros de creación de reportes
 class CreateReportParams {
   final String title;
   final String description;
@@ -83,7 +66,7 @@ class CreateReportParams {
   final Priority priority;
   final List<File> attachments;
 
-  CreateReportParams({
+  const CreateReportParams({
     required this.title,
     required this.description,
     required this.category,
@@ -92,23 +75,5 @@ class CreateReportParams {
     required this.userId,
     this.priority = Priority.medium,
     this.attachments = const [],
-  });
-}
-
-class UpdateReportParams {
-  final String? title;
-  final String? description;
-  final String? category;
-  final String? references;
-  final LocationData? location;
-  final Priority? priority;
-
-  UpdateReportParams({
-    this.title,
-    this.description,
-    this.category,
-    this.references,
-    this.location,
-    this.priority,
   });
 }

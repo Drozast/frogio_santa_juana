@@ -2,16 +2,19 @@
 import 'dart:io';
 
 import '../../domain/entities/enhanced_report_entity.dart';
-import '../../domain/repositories/enhanced_report_repository.dart';
 import '../models/enhanced_report_model.dart';
 
 abstract class ReportRemoteDataSource {
+  /// Obtiene reportes por usuario
   Future<List<ReportModel>> getReportsByUser(String userId);
-  Future<ReportModel> getReportById(String reportId);
-  Future<String> createReport(CreateReportParams params);
-  Future<void> updateReport(String reportId, UpdateReportParams params);
-  Future<void> deleteReport(String reportId);
   
+  /// Obtiene un reporte por ID
+  Future<ReportModel> getReportById(String reportId);
+  
+  /// Crea un nuevo reporte
+  Future<String> createReport(CreateReportParams params);
+  
+  /// Actualiza el estado de un reporte
   Future<void> updateReportStatus({
     required String reportId,
     required ReportStatus status,
@@ -19,47 +22,59 @@ abstract class ReportRemoteDataSource {
     required String userId,
   });
   
+  /// Añade una respuesta a un reporte
   Future<void> addResponse({
     required String reportId,
     required String responderId,
     required String responderName,
     required String message,
     List<File>? attachments,
-    bool isPublic = true,
+    required bool isPublic,
   });
   
-  Future<List<MediaAttachment>> uploadMedia({
-    required String reportId,
-    required List<File> files,
-    required MediaType type,
-  });
-  
+  /// Obtiene reportes por estado
   Future<List<ReportModel>> getReportsByStatus(
     ReportStatus status, {
     String? muniId,
     String? assignedTo,
   });
   
-  Future<List<ReportModel>> getReportsByCategory(
-    String category, {
-    String? muniId,
-  });
-  
-  Future<List<ReportModel>> getReportsByLocation({
-    required double latitude,
-    required double longitude,
-    required double radiusKm,
-    String? muniId,
-  });
-  
+  /// Asigna un reporte a un inspector
   Future<void> assignReport({
     required String reportId,
     required String assignedToId,
     required String assignedById,
   });
   
-  Future<Map<String, int>> getReportStatistics(String muniId);
+  /// Sube archivos adjuntos
+  Future<List<String>> uploadAttachments(List<File> attachments, String reportId);
   
+  /// Observa reportes por usuario en tiempo real
   Stream<List<ReportModel>> watchReportsByUser(String userId);
+  
+  /// Observa reportes por estado en tiempo real
   Stream<List<ReportModel>> watchReportsByStatus(ReportStatus status, String muniId);
+}
+
+// Clase auxiliar para parámetros de creación
+class CreateReportParams {
+  final String title;
+  final String description;
+  final String category;
+  final String? references;
+  final LocationData location;
+  final String userId;
+  final Priority priority;
+  final List<File> attachments;
+
+  const CreateReportParams({
+    required this.title,
+    required this.description,
+    required this.category,
+    this.references,
+    required this.location,
+    required this.userId,
+    required this.priority,
+    required this.attachments,
+  });
 }

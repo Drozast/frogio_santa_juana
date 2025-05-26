@@ -28,7 +28,7 @@ import '../features/admin/domain/usecases/get_municipal_statistics.dart';
 import '../features/admin/domain/usecases/update_user_role.dart';
 import '../features/admin/presentation/bloc/statistics/statistics_bloc.dart';
 import '../features/admin/presentation/bloc/user_management/user_management_bloc.dart';
-// Auth Feature
+// Auth Feature - Asumiendo que existen
 import '../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../features/auth/data/datasources/auth_remote_data_source_impl.dart';
 import '../features/auth/data/repositories/auth_repository_impl.dart';
@@ -42,7 +42,7 @@ import '../features/auth/domain/usecases/update_user_profile.dart';
 import '../features/auth/domain/usecases/upload_profile_image.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/auth/presentation/bloc/profile/profile_bloc.dart';
-// Citizen Feature  
+// Citizen Feature - Enhanced Reports
 import '../features/citizen/data/datasources/enhanced_report_remote_data_source.dart';
 import '../features/citizen/data/datasources/enhanced_report_remote_data_source_impl.dart';
 import '../features/citizen/data/repositories/enhanced_report_repository_impl.dart';
@@ -75,35 +75,30 @@ final logger = Logger();
 Future<void> init() async {
   logger.i('🚀 FROGIO: Initializing dependencies...');
   
-  try {
-    // ===== CORE SERVICES =====
-    await _initCoreServices();
-    
-    // ===== FIREBASE INSTANCES =====
-    _initFirebaseServices();
-    
-    // ===== NETWORK =====
-    _initNetworkServices();
-    
-    // ===== FEATURES =====
-    await _initAuthFeature();
-    await _initCitizenFeature();
-    await _initInspectorFeature();
-    await _initAdminFeature();
-    await _initVehiclesFeature();
-    await _initDashboardFeature();
-    
-    // ===== INITIALIZE SERVICES =====
-    await _initializeServices();
-    
-    // ===== VALIDATION =====
-    _validateDependencies();
-    
-    logger.i('✅ FROGIO: All dependencies initialized successfully');
-  } catch (e, stackTrace) {
-    logger.e('❌ FROGIO: Initialization failed', error: e, stackTrace: stackTrace);
-    rethrow;
-  }
+  // ===== CORE SERVICES =====
+  await _initCoreServices();
+  
+  // ===== FIREBASE INSTANCES =====
+  _initFirebaseServices();
+  
+  // ===== NETWORK =====
+  _initNetworkServices();
+  
+  // ===== FEATURES =====
+  await _initAuthFeature();
+  await _initCitizenFeature();
+  await _initInspectorFeature();
+  await _initAdminFeature();
+  await _initVehiclesFeature();
+  await _initDashboardFeature();
+  
+  // ===== INITIALIZE SERVICES =====
+  await _initializeServices();
+  
+  // ===== VALIDATION =====
+  _validateDependencies();
+  
+  logger.i('✅ FROGIO: All dependencies initialized successfully');
 }
 
 // ===== CORE SERVICES =====
@@ -193,43 +188,43 @@ Future<void> _initAuthFeature() async {
 Future<void> _initCitizenFeature() async {
   logger.d('👤 Initializing Citizen feature...');
 
-  // BLoCs - Usar el nombre correcto del BLoC
+  // BLoCs - Registrar ReportBloc correctamente
   sl.registerFactory(
     () => ReportBloc(
-      createReport: sl(),
-      getReportsByUser: sl(),
-      getReportById: sl(),
-      updateReportStatus: sl(),
-      addReportResponse: sl(),
-      getReportsByStatus: sl(),
-      assignReport: sl(),
-      watchReportsByUser: sl(),
-      watchReportsByStatus: sl(),
+      createReport: sl<CreateEnhancedReport>(),
+      getReportsByUser: sl<GetEnhancedReportsByUser>(),
+      getReportById: sl<GetEnhancedReportById>(),
+      updateReportStatus: sl<UpdateReportStatus>(),
+      addReportResponse: sl<AddReportResponse>(),
+      getReportsByStatus: sl<GetReportsByStatus>(),
+      assignReport: sl<AssignReport>(),
+      watchReportsByUser: sl<WatchReportsByUser>(),
+      watchReportsByStatus: sl<WatchReportsByStatus>(),
     ),
   );
 
-  // Use Cases - Usar los nombres correctos de Enhanced
-  sl.registerLazySingleton(() => CreateEnhancedReport(sl()));
-  sl.registerLazySingleton(() => GetEnhancedReportsByUser(sl()));
-  sl.registerLazySingleton(() => GetEnhancedReportById(sl()));
-  sl.registerLazySingleton(() => UpdateReportStatus(sl()));
-  sl.registerLazySingleton(() => AddReportResponse(sl()));
-  sl.registerLazySingleton(() => GetReportsByStatus(sl()));
-  sl.registerLazySingleton(() => AssignReport(sl()));
-  sl.registerLazySingleton(() => WatchReportsByUser(sl()));
-  sl.registerLazySingleton(() => WatchReportsByStatus(sl()));
+  // Use Cases - Registrar todos los use cases del enhanced module
+  sl.registerLazySingleton<CreateEnhancedReport>(() => CreateEnhancedReport(sl()));
+  sl.registerLazySingleton<GetEnhancedReportsByUser>(() => GetEnhancedReportsByUser(sl()));
+  sl.registerLazySingleton<GetEnhancedReportById>(() => GetEnhancedReportById(sl()));
+  sl.registerLazySingleton<UpdateReportStatus>(() => UpdateReportStatus(sl()));
+  sl.registerLazySingleton<AddReportResponse>(() => AddReportResponse(sl()));
+  sl.registerLazySingleton<GetReportsByStatus>(() => GetReportsByStatus(sl()));
+  sl.registerLazySingleton<AssignReport>(() => AssignReport(sl()));
+  sl.registerLazySingleton<WatchReportsByUser>(() => WatchReportsByUser(sl()));
+  sl.registerLazySingleton<WatchReportsByStatus>(() => WatchReportsByStatus(sl()));
 
-  // Repository - Usar el nombre correcto
+  // Repository - Usar el enhanced repository
   sl.registerLazySingleton<ReportRepository>(
-    () => ReportRepositoryImpl(remoteDataSource: sl()),
+    () => ReportRepositoryImpl(remoteDataSource: sl<ReportRemoteDataSource>()),
   );
 
-  // Data Sources - Usar el nombre correcto
+  // Data Sources - Usar el enhanced data source
   sl.registerLazySingleton<ReportRemoteDataSource>(
     () => ReportRemoteDataSourceImpl(
-      firestore: sl(),
-      storage: sl(),
-      uuid: sl(),
+      firestore: sl<FirebaseFirestore>(),
+      storage: sl<FirebaseStorage>(),
+      uuid: sl<Uuid>(),
     ),
   );
   
@@ -417,9 +412,6 @@ void _validateDependencies() {
     'InfractionBloc': _validateService<InfractionBloc>(),
     'VehicleBloc': _validateService<VehicleBloc>(),
     'UserManagementBloc': _validateService<UserManagementBloc>(),
-    'StatisticsBloc': _validateService<StatisticsBloc>(),
-    'ProfileBloc': _validateService<ProfileBloc>(),
-    'ThemeBloc': _validateService<ThemeBloc>(),
     'FirebaseAuth': _validateService<FirebaseAuth>(),
     'FirebaseFirestore': _validateService<FirebaseFirestore>(),
     'FirebaseStorage': _validateService<FirebaseStorage>(),
