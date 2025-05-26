@@ -3,20 +3,23 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
+import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/widgets/location_picker_widget.dart';
 import '../../../../di/injection_container.dart' as di;
-import '../../domain/entities/report_entity.dart';
-import '../bloc/report/report_bloc.dart';
-import '../bloc/report/report_event.dart';
-import '../bloc/report/report_state.dart';
+import '../../domain/entities/enhanced_report_entity.dart';
+import '../../domain/usecases/reports/enhanced_report_use_cases.dart';
+import '../bloc/report/enhanced_report_bloc.dart';
+import '../bloc/report/enhanced_report_event.dart';
+import '../bloc/report/enhanced_report_state.dart';
 
 class CreateReportScreen extends StatefulWidget {
   final String userId;
-  
+
   const CreateReportScreen({
     super.key,
     required this.userId,
@@ -30,82 +33,421 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  String _selectedCategory = 'Alumbrado Público';
+  final _referencesController = TextEditingController();
+  
+  String _selectedCategory = 'Infraestructura';
+  Priority _selectedPriority = Priority.medium;
+  LocationData? _selectedLocation;
+  List<File> _selectedImages = [];
+  
+  late ReportBloc _reportBloc;
+
   final List<String> _categories = [
-    'Alumbrado Público',
-    'Basura',
-    'Calles y Veredas',
+    'Infraestructura',
     'Seguridad',
-    'Áreas Verdes',
+    'Medio Ambiente',
+    'Servicios Públicos',
+    'Transporte',
     'Otro',
   ];
-  final List<File> _selectedImages = [];
-  final _imagePicker = ImagePicker();
-  late ReportBloc _reportBloc;
-  String? _address;
-  Position? _currentPosition;
-  bool _isLoadingLocation = false;
 
   @override
   void initState() {
     super.initState();
     _reportBloc = di.sl<ReportBloc>();
-    _getCurrentLocation();
   }
 
   @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: _reportBloc,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Nueva Denuncia'),
+          elevation: 0,
+        ),
+        body: BlocListener<ReportBloc, ReportState>(
+          listener: (context, state) {
+            if (state is ReportCreated) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Denuncia creada exitosamente'),
+                  backgroundColor: AppTheme.successColor,
+                ),
+              );
+              Navigator.pop(context, true);
+            } else if (state is ReportError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppTheme.errorColor,
+                ),
+              );
+            }
+          },
+          child: BlocBuilder<ReportBloc, ReportState>(
+            builder: (context, state) {
+              return Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildBasicInfo(),
+                            const SizedBox(height: 24),
+                            _buildCategoryAndPriority(),
+                            const SizedBox(height: 24),
+                            _buildLocationSection(),
+                            const SizedBox(height: 24),
+                            _buildImagesSection(),
+                            const SizedBox(height: 24),
+                            _buildReferencesSection(),
+                          ],
+                        ),
+                      ),
+                    ),
+                    _buildBottomButtons(state),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
-  Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isLoadingLocation = true;
-    });
-
-    try {
-      final position = await Geolocator.getCurrentPosition();
-      
-      if (!mounted) return;
-      
-      setState(() {
-        _currentPosition = position;
-        _address = "Ubicación actual";
-        _isLoadingLocation = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      
-      setState(() {
-        _address = "No se pudo obtener ubicación";
-        _isLoadingLocation = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al obtener ubicación: ${e.toString()}'),
-          backgroundColor: AppTheme.warningColor,
+  Widget _buildBasicInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Información Básica',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-      );
-    }
+        const SizedBox(height: 16),
+        CustomTextField(
+          label: 'Título',
+          hint: 'Resumen breve del problema',
+          controller: _titleController,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'El título es requerido';
+            }
+            if (value.trim().length < 5) {
+              return 'El título debe tener al menos 5 caracteres';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        CustomTextField(
+          label: 'Descripción',
+          hint: 'Describe el problema en detalle',
+          controller: _descriptionController,
+          maxLines: 4,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'La descripción es requerida';
+            }
+            if (value.trim().length < 20) {
+              return 'La descripción debe tener al menos 20 caracteres';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryAndPriority() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Categoría y Prioridad',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        
+        // Categoría
+        const Text(
+          'Categoría',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _selectedCategory,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+          ),
+          items: _categories.map((category) {
+            return DropdownMenuItem(
+              value: category,
+              child: Text(category),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedCategory = value!;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        
+        // Prioridad
+        const Text(
+          'Prioridad',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<Priority>(
+          value: _selectedPriority,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+          ),
+          items: Priority.values.map((priority) {
+            return DropdownMenuItem(
+              value: priority,
+              child: Text(priority.displayName),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedPriority = value!;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Ubicación',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_selectedLocation != null) ...[
+                const Row(
+                  children: [
+                    Icon(Icons.location_on, color: AppTheme.primaryColor),
+                    SizedBox(width: 8),
+                    Text('Ubicación seleccionada:'),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _selectedLocation!.address ?? 
+                  'Lat: ${_selectedLocation!.latitude.toStringAsFixed(6)}, '
+                  'Lng: ${_selectedLocation!.longitude.toStringAsFixed(6)}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ] else
+                const Text(
+                  'No se ha seleccionado ubicación',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _selectLocation,
+                  icon: const Icon(Icons.map),
+                  label: Text(_selectedLocation != null 
+                      ? 'Cambiar ubicación' 
+                      : 'Seleccionar ubicación'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImagesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Imágenes (Opcional)',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        
+        if (_selectedImages.isNotEmpty) ...[
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _selectedImages.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          _selectedImages[index],
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _pickImage(ImageSource.camera),
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Tomar foto'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _pickImage(ImageSource.gallery),
+                icon: const Icon(Icons.photo_library),
+                label: const Text('Galería'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReferencesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Referencias Adicionales (Opcional)',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        CustomTextField(
+          label: 'Referencias',
+          hint: 'Información adicional, números de ordenanza, etc.',
+          controller: _referencesController,
+          maxLines: 2,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomButtons(ReportState state) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: state is ReportCreating ? null : () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: CustomButton(
+              text: 'Crear Denuncia',
+              onPressed: state is ReportCreating ? () {} : _submitReport,
+              isLoading: state is ReportCreating,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _selectLocation() async {
+    final result = await Navigator.push<LatLng>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LocationPickerWidget(
+          onLocationSelected: (location, address) {
+            setState(() {
+              _selectedLocation = LocationData(
+                latitude: location.latitude,
+                longitude: location.longitude,
+                address: address,
+                source: LocationSource.map,
+              );
+            });
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? image = await _imagePicker.pickImage(
-        source: source,
-        imageQuality: 70,
-      );
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
       
-      if (image != null) {
+      if (pickedFile != null) {
         setState(() {
-          _selectedImages.add(File(image.path));
+          _selectedImages.add(File(pickedFile.path));
         });
       }
     } catch (e) {
-      if (!mounted) return;
-      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al seleccionar imagen: ${e.toString()}'),
@@ -122,345 +464,41 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   }
 
   void _submitReport() {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedImages.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Por favor, agrega al menos una foto'),
-            backgroundColor: AppTheme.warningColor,
-          ),
-        );
-        return;
-      }
-
-      final location = LocationData(
-        latitude: _currentPosition?.latitude ?? 0,
-        longitude: _currentPosition?.longitude ?? 0,
-        address: _address,
-      );
-
-      _reportBloc.add(CreateReportEvent(
-        title: _titleController.text,
-        description: _descriptionController.text,
-        category: _selectedCategory,
-        location: location,
-        userId: widget.userId,
-        images: _selectedImages,
-      ));
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
-  }
 
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+    if (_selectedLocation == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor selecciona una ubicación'),
+          backgroundColor: AppTheme.warningColor,
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                color: AppTheme.successColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_circle,
-                size: 80,
-                color: AppTheme.successColor,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              '¡Denuncia Enviada!',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Tu denuncia ha sido enviada exitosamente. Podrás seguir su estado en la sección "Mis Denuncias".',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Return to previous screen
-            },
-            child: const Text(
-              'Aceptar',
-              style: TextStyle(color: AppTheme.primaryColor),
-            ),
-          ),
-        ],
-      ),
+      );
+      return;
+    }
+
+    final params = CreateEnhancedReportParams(
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim(),
+      category: _selectedCategory,
+      references: _referencesController.text.trim().isNotEmpty 
+          ? _referencesController.text.trim() 
+          : null,
+      location: _selectedLocation!,
+      userId: widget.userId,
+      priority: _selectedPriority,
+      attachments: _selectedImages,
     );
+
+    _reportBloc.add(CreateReportEvent(params: params));
   }
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => _reportBloc,
-      child: BlocListener<ReportBloc, ReportState>(
-        listener: (context, state) {
-          if (state is ReportCreated) {
-            _showSuccessDialog();
-          } else if (state is ReportError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppTheme.errorColor,
-              ),
-            );
-          }
-        },
-        child: BlocBuilder<ReportBloc, ReportState>(
-          builder: (context, state) {
-            return Scaffold(
-              appBar: AppBar(
-                title: const Text('Nueva Denuncia'),
-              ),
-              body: GestureDetector(
-                onTap: () => FocusScope.of(context).unfocus(),
-                child: Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Instructions
-                        const Card(
-                          color: Color(0xFFE8F5E9),
-                          child: Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Icon(Icons.info, color: AppTheme.primaryColor),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Completa el formulario y adjunta fotos para informar sobre un problema en tu comunidad.',
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        
-                        // Title
-                        const Text(
-                          'Título de la denuncia',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _titleController,
-                          decoration: const InputDecoration(
-                            hintText: 'Ej: Luminaria dañada en calle Principal',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor ingresa un título';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Category
-                        const Text(
-                          'Categoría',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          value: _selectedCategory,
-                          decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          ),
-                          items: _categories.map((category) {
-                            return DropdownMenuItem<String>(
-                              value: category,
-                              child: Text(category),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                _selectedCategory = value;
-                              });
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Location
-                        const Text(
-                          'Ubicación',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on,
-                                  color: _isLoadingLocation 
-                                      ? Colors.grey 
-                                      : _currentPosition != null
-                                          ? AppTheme.successColor
-                                          : AppTheme.errorColor,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _isLoadingLocation
-                                      ? const Text('Obteniendo ubicación...')
-                                      : Text(_address ?? 'Ubicación no disponible'),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.refresh),
-                                  onPressed: _getCurrentLocation,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Description
-                        const Text(
-                          'Descripción',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _descriptionController,
-                          maxLines: 5,
-                          decoration: const InputDecoration(
-                            hintText: 'Describe el problema con detalles...',
-                            alignLabelWithHint: true,
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor ingresa una descripción';
-                            }
-                            if (value.length < 10) {
-                              return 'La descripción debe tener al menos 10 caracteres';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 24),
-                        
-                        // Images
-                        const Text(
-                          'Fotografías',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: CustomButton(
-                                text: 'Tomar Foto',
-                                icon: Icons.camera_alt,
-                                onPressed: () => _pickImage(ImageSource.camera),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: CustomButton(
-                                text: 'Galería',
-                                icon: Icons.photo_library,
-                                isOutlined: true,
-                                onPressed: () => _pickImage(ImageSource.gallery),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Image preview
-                        if (_selectedImages.isNotEmpty) ...[
-                          SizedBox(
-                            height: 120,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _selectedImages.length,
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.file(
-                                          _selectedImages[index],
-                                          width: 120,
-                                          height: 120,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 4,
-                                        right: 4,
-                                        child: GestureDetector(
-                                          onTap: () => _removeImage(index),
-                                          child: Container(
-                                            decoration: const BoxDecoration(
-                                              color: Colors.red,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            padding: const EdgeInsets.all(4),
-                                            child: const Icon(
-                                              Icons.close,
-                                              color: Colors.white,
-                                              size: 16,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                        
-                        // Submit button
-                        SizedBox(
-                          width: double.infinity,
-                          child: CustomButton(
-                            text: 'Enviar Denuncia',
-                            isLoading: state is SubmittingReport,
-                            onPressed: _submitReport,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _referencesController.dispose();
+    super.dispose();
   }
 }

@@ -1,8 +1,8 @@
+// lib/features/citizen/presentation/widgets/report_list_item.dart
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../domain/entities/report_entity.dart';
+import '../../domain/entities/enhanced_report_entity.dart';
 
 class ReportListItem extends StatelessWidget {
   final ReportEntity report;
@@ -17,6 +17,7 @@ class ReportListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -29,72 +30,112 @@ class ReportListItem extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header con título y estado
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _getCategoryIcon(),
-                  const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      report.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          report.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          report.category,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  _getStatusBadge(),
+                  const SizedBox(width: 12),
+                  _buildStatusChip(),
                 ],
               ),
+              
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.location_on,
-                    size: 16,
-                    color: Colors.grey,
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      report.location.address ?? 'Ubicación no disponible',
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+              
+              // Descripción
               Text(
                 report.description,
-                style: const TextStyle(fontSize: 14),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              
               const SizedBox(height: 12),
+              
+              // Información adicional
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Prioridad
+                  _buildPriorityChip(),
+                  const SizedBox(width: 8),
+                  
+                  // Adjuntos
+                  if (report.attachments.isNotEmpty) ...[
+                    _buildAttachmentsChip(),
+                    const SizedBox(width: 8),
+                  ],
+                  
+                  // Respuestas
+                  if (report.responses.isNotEmpty) ...[
+                    _buildResponsesChip(),
+                  ],
+                ],
+              ),
+              
+              const SizedBox(height: 12),
+              
+              // Footer con fecha y ubicación
+              Row(
+                children: [
+                  Icon(
+                    Icons.access_time,
+                    size: 16,
+                    color: Colors.grey[500],
+                  ),
+                  const SizedBox(width: 4),
                   Text(
-                    'Categoría: ${report.category}',
-                    style: const TextStyle(
+                    _formatDate(report.createdAt),
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey,
+                      color: Colors.grey[500],
                     ),
                   ),
-                  Text(
-                    'Creada: ${DateFormat('dd/MM/yyyy').format(report.createdAt)}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
+                  const Spacer(),
+                  if (report.location.address != null) ...[
+                    Icon(
+                      Icons.location_on,
+                      size: 16,
+                      color: Colors.grey[500],
                     ),
-                  ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        report.location.address!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -104,86 +145,181 @@ class ReportListItem extends StatelessWidget {
     );
   }
 
-  Widget _getCategoryIcon() {
-    IconData iconData;
-    Color color;
-
-    switch (report.category) {
-      case 'Alumbrado Público':
-        iconData = Icons.lightbulb;
-        color = Colors.amber;
-        break;
-      case 'Basura':
-        iconData = Icons.delete;
-        color = Colors.brown;
-        break;
-      case 'Calles y Veredas':
-        iconData = Icons.directions_walk;
-        color = Colors.grey;
-        break;
-      case 'Seguridad':
-        iconData = Icons.security;
-        color = Colors.red;
-        break;
-      case 'Áreas Verdes':
-        iconData = Icons.park;
-        color = AppTheme.primaryColor;
-        break;
-      default:
-        iconData = Icons.help;
-        color = Colors.blue;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(
-        iconData,
-        color: color,
-        size: 20,
-      ),
-    );
-  }
-
-  Widget _getStatusBadge() {
-    Color color;
-    String text = report.status;
+  Widget _buildStatusChip() {
+    Color backgroundColor;
+    Color textColor;
+    IconData icon;
 
     switch (report.status) {
-      case 'Pendiente':
-        color = Colors.orange;
+      case ReportStatus.draft:
+        backgroundColor = Colors.grey.withValues(alpha: 0.1);
+        textColor = Colors.grey;
+        icon = Icons.edit;
         break;
-      case 'En Proceso':
-        color = Colors.blue;
+      case ReportStatus.submitted:
+        backgroundColor = Colors.blue.withValues(alpha: 0.1);
+        textColor = Colors.blue;
+        icon = Icons.send;
         break;
-      case 'Completada':
-        color = AppTheme.successColor;
+      case ReportStatus.reviewing:
+        backgroundColor = Colors.orange.withValues(alpha: 0.1);
+        textColor = Colors.orange;
+        icon = Icons.visibility;
         break;
-      case 'Rechazada':
-        color = AppTheme.errorColor;
+      case ReportStatus.inProgress:
+        backgroundColor = Colors.purple.withValues(alpha: 0.1);
+        textColor = Colors.purple;
+        icon = Icons.work;
         break;
-      default:
-        color = Colors.grey;
+      case ReportStatus.resolved:
+        backgroundColor = Colors.green.withValues(alpha: 0.1);
+        textColor = Colors.green;
+        icon = Icons.check_circle;
+        break;
+      case ReportStatus.rejected:
+        backgroundColor = Colors.red.withValues(alpha: 0.1);
+        textColor = Colors.red;
+        icon = Icons.cancel;
+        break;
+      case ReportStatus.archived:
+        backgroundColor = Colors.grey.withValues(alpha: 0.1);
+        textColor = Colors.grey;
+        icon = Icons.archive;
+        break;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color, width: 1),
+        border: Border.all(color: textColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            report.status.displayName,
+            style: TextStyle(
+              fontSize: 12,
+              color: textColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriorityChip() {
+    Color color;
+    switch (report.priority) {
+      case Priority.low:
+        color = Colors.green;
+        break;
+      case Priority.medium:
+        color = Colors.orange;
+        break;
+      case Priority.high:
+        color = Colors.red;
+        break;
+      case Priority.urgent:
+        color = Colors.purple;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
-        text,
+        report.priority.displayName,
         style: TextStyle(
+          fontSize: 10,
           color: color,
-          fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
       ),
     );
+  }
+
+  Widget _buildAttachmentsChip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.attach_file,
+            size: 10,
+            color: AppTheme.primaryColor,
+          ),
+          const SizedBox(width: 2),
+          Text(
+            '${report.attachments.length}',
+            style: const TextStyle(
+              fontSize: 10,
+              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResponsesChip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.chat,
+            size: 10,
+            color: Colors.blue,
+          ),
+          const SizedBox(width: 2),
+          Text(
+            '${report.responses.length}',
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.blue,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 0) {
+      return 'hace ${difference.inDays} día${difference.inDays == 1 ? '' : 's'}';
+    } else if (difference.inHours > 0) {
+      return 'hace ${difference.inHours} hora${difference.inHours == 1 ? '' : 's'}';
+    } else if (difference.inMinutes > 0) {
+      return 'hace ${difference.inMinutes} minuto${difference.inMinutes == 1 ? '' : 's'}';
+    } else {
+      return 'ahora';
+    }
   }
 }
