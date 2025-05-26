@@ -6,10 +6,10 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/enhanced_report_entity.dart';
 import '../../domain/repositories/enhanced_report_repository.dart';
-import '../datasources/enhanced_report_remote_data_source.dart';
+import '../datasources/enhanced_report_remote_data_source.dart' as datasource;
 
 class ReportRepositoryImpl implements ReportRepository {
-  final ReportRemoteDataSource remoteDataSource;
+  final datasource.ReportRemoteDataSource remoteDataSource;
 
   ReportRepositoryImpl({required this.remoteDataSource});
 
@@ -36,7 +36,8 @@ class ReportRepositoryImpl implements ReportRepository {
   @override
   Future<Either<Failure, String>> createReport(CreateReportParams params) async {
     try {
-      final reportParams = CreateReportParams(
+      // Convertir del domain CreateReportParams al datasource CreateReportParams
+      final datasourceParams = datasource.CreateReportParams(
         title: params.title,
         description: params.description,
         category: params.category,
@@ -47,7 +48,7 @@ class ReportRepositoryImpl implements ReportRepository {
         attachments: params.attachments,
       );
       
-      final reportId = await remoteDataSource.createReport(reportParams);
+      final reportId = await remoteDataSource.createReport(datasourceParams);
       return Right(reportId);
     } catch (e) {
       return Left(ServerFailure('Error al crear reporte: ${e.toString()}'));
@@ -143,27 +144,4 @@ class ReportRepositoryImpl implements ReportRepository {
   Stream<List<ReportEntity>> watchReportsByStatus(ReportStatus status, String muniId) {
     return remoteDataSource.watchReportsByStatus(status, muniId);
   }
-}
-
-// Clase auxiliar para parámetros de creación (debe coincidir con los use cases)
-class CreateReportParams {
-  final String title;
-  final String description;
-  final String category;
-  final String? references;
-  final LocationData location;
-  final String userId;
-  final Priority priority;
-  final List<File> attachments;
-
-  const CreateReportParams({
-    required this.title,
-    required this.description,
-    required this.category,
-    this.references,
-    required this.location,
-    required this.userId,
-    required this.priority,
-    required this.attachments,
-  });
 }
