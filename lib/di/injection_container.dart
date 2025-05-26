@@ -268,7 +268,7 @@ Future<void> _initInspectorFeature() async {
   logger.d('✅ Inspector feature registered');
 }
 
-// ===== ADMIN FEATURE =====
+// ===== ADMIN FEATURE ===== (Sección corregida para injection_container.dart)
 Future<void> _initAdminFeature() async {
   logger.d('👨‍💼 Initializing Admin feature...');
 
@@ -277,6 +277,8 @@ Future<void> _initAdminFeature() async {
     () => UserManagementBloc(
       getAllUsers: sl(),
       updateUserRole: sl(),
+      activateUser: sl(),
+      deactivateUser: sl(),
     ),
   );
 
@@ -310,7 +312,6 @@ Future<void> _initAdminFeature() async {
   
   logger.d('✅ Admin feature registered');
 }
-
 // ===== VEHICLES FEATURE =====
 Future<void> _initVehiclesFeature() async {
   logger.d('🚗 Initializing Vehicles feature...');
