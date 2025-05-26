@@ -16,19 +16,52 @@ class ReportLoading extends ReportState {}
 
 class ReportCreating extends ReportState {}
 
+class ReportAssigning extends ReportState {}
+
 class ReportsLoaded extends ReportState {
   final List<ReportEntity> reports;
+  final List<ReportEntity> filteredReports;
+  final String currentFilter;
+  final String searchQuery;
 
-  const ReportsLoaded({required this.reports});
+  const ReportsLoaded({
+    required this.reports,
+    List<ReportEntity>? filteredReports,
+    this.currentFilter = 'Todas',
+    this.searchQuery = '',
+  }) : filteredReports = filteredReports ?? reports;
+
+  @override
+  List<Object> get props => [reports, filteredReports, currentFilter, searchQuery];
+
+  ReportsLoaded copyWith({
+    List<ReportEntity>? reports,
+    List<ReportEntity>? filteredReports,
+    String? currentFilter,
+    String? searchQuery,
+  }) {
+    return ReportsLoaded(
+      reports: reports ?? this.reports,
+      filteredReports: filteredReports ?? this.filteredReports,
+      currentFilter: currentFilter ?? this.currentFilter,
+      searchQuery: searchQuery ?? this.searchQuery,
+    );
+  }
+}
+
+class ReportsStreaming extends ReportState {
+  final List<ReportEntity> reports;
+
+  const ReportsStreaming({required this.reports});
 
   @override
   List<Object> get props => [reports];
 }
 
-class ReportDetailLoaded extends ReportState {
+class ReportLoaded extends ReportState {
   final ReportEntity report;
 
-  const ReportDetailLoaded({required this.report});
+  const ReportLoaded({required this.report});
 
   @override
   List<Object> get props => [report];
@@ -43,6 +76,37 @@ class ReportCreated extends ReportState {
   List<Object> get props => [reportId];
 }
 
+class ReportUpdated extends ReportState {
+  final ReportEntity report;
+
+  const ReportUpdated({required this.report});
+
+  @override
+  List<Object> get props => [report];
+}
+
+class ReportAssigned extends ReportState {
+  final String reportId;
+  final String assignedToId;
+
+  const ReportAssigned({
+    required this.reportId,
+    required this.assignedToId,
+  });
+
+  @override
+  List<Object> get props => [reportId, assignedToId];
+}
+
+class ReportResponseAdded extends ReportState {
+  final String reportId;
+
+  const ReportResponseAdded({required this.reportId});
+
+  @override
+  List<Object> get props => [reportId];
+}
+
 class ReportError extends ReportState {
   final String message;
 
@@ -52,11 +116,11 @@ class ReportError extends ReportState {
   List<Object> get props => [message];
 }
 
-class ReportOperationSuccess extends ReportState {
-  final String message;
+class ReportValidationError extends ReportState {
+  final Map<String, String> errors;
 
-  const ReportOperationSuccess({required this.message});
+  const ReportValidationError({required this.errors});
 
   @override
-  List<Object> get props => [message];
+  List<Object> get props => [errors];
 }

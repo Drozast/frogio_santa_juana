@@ -19,14 +19,16 @@ class LoadReportsEvent extends ReportEvent {
   List<Object> get props => [userId];
 }
 
-class LoadReportByIdEvent extends ReportEvent {
-  final String reportId;
+class StartWatchingUserReportsEvent extends ReportEvent {
+  final String userId;
 
-  const LoadReportByIdEvent({required this.reportId});
+  const StartWatchingUserReportsEvent({required this.userId});
 
   @override
-  List<Object> get props => [reportId];
+  List<Object> get props => [userId];
 }
+
+class StopWatchingReportsEvent extends ReportEvent {}
 
 class CreateReportEvent extends ReportEvent {
   final CreateEnhancedReportParams params;
@@ -37,47 +39,97 @@ class CreateReportEvent extends ReportEvent {
   List<Object> get props => [params];
 }
 
+class GetReportByIdEvent extends ReportEvent {
+  final String reportId;
+
+  const GetReportByIdEvent({required this.reportId});
+
+  @override
+  List<Object> get props => [reportId];
+}
+
 class UpdateReportStatusEvent extends ReportEvent {
-  final UpdateReportStatusParams params;
+  final String reportId;
+  final String status;
+  final String? comment;
+  final String userId;
 
-  const UpdateReportStatusEvent({required this.params});
-
-  @override
-  List<Object> get props => [params];
-}
-
-class AddReportResponseEvent extends ReportEvent {
-  final AddReportResponseParams params;
-
-  const AddReportResponseEvent({required this.params});
-
-  @override
-  List<Object> get props => [params];
-}
-
-class LoadReportsByStatusEvent extends ReportEvent {
-  final GetReportsByStatusParams params;
-
-  const LoadReportsByStatusEvent({required this.params});
+  const UpdateReportStatusEvent({
+    required this.reportId,
+    required this.status,
+    this.comment,
+    required this.userId,
+  });
 
   @override
-  List<Object> get props => [params];
+  List<Object?> get props => [reportId, status, comment, userId];
 }
 
 class AssignReportEvent extends ReportEvent {
-  final AssignReportParams params;
+  final String reportId;
+  final String assignedToId;
+  final String assignedById;
+  final String? note;
 
-  const AssignReportEvent({required this.params});
+  const AssignReportEvent({
+    required this.reportId,
+    required this.assignedToId,
+    required this.assignedById,
+    this.note,
+  });
 
   @override
-  List<Object> get props => [params];
+  List<Object?> get props => [reportId, assignedToId, assignedById, note];
 }
 
-class RefreshReportsEvent extends ReportEvent {
-  final String userId;
+class FilterReportsEvent extends ReportEvent {
+  final String filter;
 
-  const RefreshReportsEvent({required this.userId});
+  const FilterReportsEvent({required this.filter});
 
   @override
-  List<Object> get props => [userId];
+  List<Object> get props => [filter];
+}
+
+class SearchReportsEvent extends ReportEvent {
+  final String query;
+
+  const SearchReportsEvent({required this.query});
+
+  @override
+  List<Object> get props => [query];
+}
+
+class AddReportResponseEvent extends ReportEvent {
+  final String reportId;
+  final String responderId;
+  final String responderName;
+  final String message;
+  final bool isPublic;
+
+  const AddReportResponseEvent({
+    required this.reportId,
+    required this.responderId,
+    required this.responderName,
+    required this.message,
+    this.isPublic = true,
+  });
+
+  @override
+  List<Object> get props => [reportId, responderId, responderName, message, isPublic];
+}
+
+class GetReportsByStatusEvent extends ReportEvent {
+  final String status;
+  final String? muniId;
+  final String? assignedTo;
+
+  const GetReportsByStatusEvent({
+    required this.status,
+    this.muniId,
+    this.assignedTo,
+  });
+
+  @override
+  List<Object?> get props => [status, muniId, assignedTo];
 }

@@ -38,7 +38,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   String _selectedCategory = 'Infraestructura';
   Priority _selectedPriority = Priority.medium;
   LocationData? _selectedLocation;
-  List<File> _selectedImages = [];
+  final List<File> _selectedImages = [];
   
   late ReportBloc _reportBloc;
 

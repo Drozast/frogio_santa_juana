@@ -9,6 +9,7 @@ import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../di/injection_container.dart' as di;
 import '../../domain/entities/enhanced_report_entity.dart';
+import '../../domain/usecases/reports/enhanced_report_use_cases.dart';
 import '../bloc/report/enhanced_report_bloc.dart';
 import '../bloc/report/enhanced_report_event.dart';
 import '../bloc/report/enhanced_report_state.dart';
@@ -578,19 +579,21 @@ class _CreateReportScreenState extends State<CreateReportScreen>
       return;
     }
 
+    final params = CreateEnhancedReportParams(
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim(),
+      category: _selectedCategory,
+      references: _referencesController.text.trim().isEmpty 
+          ? null 
+          : _referencesController.text.trim(),
+      location: _selectedLocation!,
+      userId: widget.userId,
+      priority: _selectedPriority,
+      attachments: _attachedFiles,
+    );
+
     context.read<ReportBloc>().add(
-      CreateReportEvent(
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        category: _selectedCategory,
-        references: _referencesController.text.trim().isEmpty 
-            ? null 
-            : _referencesController.text.trim(),
-        location: _selectedLocation!,
-        userId: widget.userId,
-        priority: _selectedPriority,
-        attachments: _attachedFiles,
-      ),
+      CreateReportEvent(params: params),
     );
   }
 
