@@ -49,6 +49,7 @@ import '../features/citizen/data/repositories/enhanced_report_repository_impl.da
 import '../features/citizen/domain/repositories/enhanced_report_repository.dart';
 import '../features/citizen/domain/usecases/reports/enhanced_report_use_cases.dart';
 import '../features/citizen/presentation/bloc/report/enhanced_report_bloc.dart';
+import '../features/citizen/presentation/bloc/report/report_bloc.dart';
 // Inspector Feature
 import '../features/inspector/data/datasources/infraction_remote_data_source.dart';
 import '../features/inspector/data/datasources/infraction_remote_data_source_impl.dart';
@@ -185,10 +186,10 @@ Future<void> _initAuthFeature() async {
 }
 
 // ===== CITIZEN FEATURE (ENHANCED) =====
-Future<void> _initCitizenFeature() async {
+FFuture<void> _initCitizenFeature() async {
   logger.d('👤 Initializing Citizen feature...');
 
-  // BLoCs
+  // Registrar el BLoC simple (sin enhanced)
   sl.registerFactory(
     () => ReportBloc(
       createReport: sl(),
@@ -203,7 +204,7 @@ Future<void> _initCitizenFeature() async {
     ),
   );
 
-  // Use Cases
+  // Use Cases (usar los existentes)
   sl.registerLazySingleton(() => CreateEnhancedReport(sl()));
   sl.registerLazySingleton(() => GetEnhancedReportsByUser(sl()));
   sl.registerLazySingleton(() => GetEnhancedReportById(sl()));

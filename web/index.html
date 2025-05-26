@@ -2,55 +2,32 @@
 <html>
 <head>
   <base href="$FLUTTER_BASE_HREF">
-
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Aplicación FROGIO para la Municipalidad de Santa Juana">
-
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="FROGIO">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="FROGIO">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>FROGIO Santa Juana</title>
+  <title>FROGIO</title>
   <link rel="manifest" href="manifest.json">
-
-  <!-- Google Maps JavaScript API -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQ81wHnGrU_rbPUXE__OhNm-h2iB8Hbeo&libraries=geometry"></script>
-
-<!-- Geolocation permissions -->
-<meta name="permissions" content="geolocation">
-
-
-  <!-- Firebase v9+ compatible scripts -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    window.firebaseConfig = {
-      apiKey: "AIzaSyBZd3_krKkXx-S33Sg3XZ78i5UQBOGQCTA",
-      authDomain: "frogio-201f9.firebaseapp.com",
-      projectId: "frogio-201f9",
-      storageBucket: "frogio-201f9.firebasestorage.app",
-      messagingSenderId: "729189223627",
-      appId: "1:729189223627:web:187faa2b27d5439c2e9f4e",
-      measurementId: "G-YV6JDQ3DP7"
-    };
-  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
 </head>
 <body>
-
   <script>
-  // Configuración para permisos de geolocalización en web
-  if ('geolocation' in navigator) {
-    // Geolocation is available
-  } else {
-    console.log('Geolocation is not supported');
-  }
-</script>
+    const firebaseConfig = {
+      apiKey: 'AIzaSyBZd3_krKkXx-S33Sg3XZ78i5UQBOGQCTA',
+      authDomain: 'frogio-201f9.firebaseapp.com',
+      projectId: 'frogio-201f9',
+      storageBucket: 'frogio-201f9.firebasestorage.app',
+      messagingSenderId: '729189223627',
+      appId: '1:729189223627:web:187faa2b27d5439c2e9f4e',
+      measurementId: 'G-YV6JDQ3DP7',
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
   <script src="flutter_bootstrap.js" async></script>
-  
 </body>
 </html>
