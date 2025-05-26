@@ -28,7 +28,7 @@ import '../features/admin/domain/usecases/get_municipal_statistics.dart';
 import '../features/admin/domain/usecases/update_user_role.dart';
 import '../features/admin/presentation/bloc/statistics/statistics_bloc.dart';
 import '../features/admin/presentation/bloc/user_management/user_management_bloc.dart';
-// Auth Feature - Asumiendo que existen
+// Auth Feature
 import '../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../features/auth/data/datasources/auth_remote_data_source_impl.dart';
 import '../features/auth/data/repositories/auth_repository_impl.dart';
@@ -42,7 +42,7 @@ import '../features/auth/domain/usecases/update_user_profile.dart';
 import '../features/auth/domain/usecases/upload_profile_image.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/auth/presentation/bloc/profile/profile_bloc.dart';
-// Citizen Feature - Asumiendo que existen
+// Citizen Feature  
 import '../features/citizen/data/datasources/enhanced_report_remote_data_source.dart';
 import '../features/citizen/data/datasources/enhanced_report_remote_data_source_impl.dart';
 import '../features/citizen/data/repositories/enhanced_report_repository_impl.dart';
@@ -75,30 +75,35 @@ final logger = Logger();
 Future<void> init() async {
   logger.i('🚀 FROGIO: Initializing dependencies...');
   
-  // ===== CORE SERVICES =====
-  await _initCoreServices();
-  
-  // ===== FIREBASE INSTANCES =====
-  _initFirebaseServices();
-  
-  // ===== NETWORK =====
-  _initNetworkServices();
-  
-  // ===== FEATURES =====
-  await _initAuthFeature();
-  await _initCitizenFeature();
-  await _initInspectorFeature();
-  await _initAdminFeature();
-  await _initVehiclesFeature();
-  await _initDashboardFeature();
-  
-  // ===== INITIALIZE SERVICES =====
-  await _initializeServices();
-  
-  // ===== VALIDATION =====
-  _validateDependencies();
-  
-  logger.i('✅ FROGIO: All dependencies initialized successfully');
+  try {
+    // ===== CORE SERVICES =====
+    await _initCoreServices();
+    
+    // ===== FIREBASE INSTANCES =====
+    _initFirebaseServices();
+    
+    // ===== NETWORK =====
+    _initNetworkServices();
+    
+    // ===== FEATURES =====
+    await _initAuthFeature();
+    await _initCitizenFeature();
+    await _initInspectorFeature();
+    await _initAdminFeature();
+    await _initVehiclesFeature();
+    await _initDashboardFeature();
+    
+    // ===== INITIALIZE SERVICES =====
+    await _initializeServices();
+    
+    // ===== VALIDATION =====
+    _validateDependencies();
+    
+    logger.i('✅ FROGIO: All dependencies initialized successfully');
+  } catch (e, stackTrace) {
+    logger.e('❌ FROGIO: Initialization failed', error: e, stackTrace: stackTrace);
+    rethrow;
+  }
 }
 
 // ===== CORE SERVICES =====
@@ -184,11 +189,11 @@ Future<void> _initAuthFeature() async {
   logger.d('✅ Auth feature registered');
 }
 
-// ===== CITIZEN FEATURE (ENHANCED) =====
+// ===== CITIZEN FEATURE =====
 Future<void> _initCitizenFeature() async {
   logger.d('👤 Initializing Citizen feature...');
 
-  // Registrar el BLoC simple (sin enhanced)
+  // BLoCs - Usar el nombre correcto del BLoC
   sl.registerFactory(
     () => ReportBloc(
       createReport: sl(),
@@ -203,7 +208,7 @@ Future<void> _initCitizenFeature() async {
     ),
   );
 
-  // Use Cases (usar los existentes)
+  // Use Cases - Usar los nombres correctos de Enhanced
   sl.registerLazySingleton(() => CreateEnhancedReport(sl()));
   sl.registerLazySingleton(() => GetEnhancedReportsByUser(sl()));
   sl.registerLazySingleton(() => GetEnhancedReportById(sl()));
@@ -214,12 +219,12 @@ Future<void> _initCitizenFeature() async {
   sl.registerLazySingleton(() => WatchReportsByUser(sl()));
   sl.registerLazySingleton(() => WatchReportsByStatus(sl()));
 
-  // Repository
+  // Repository - Usar el nombre correcto
   sl.registerLazySingleton<ReportRepository>(
     () => ReportRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // Data Sources
+  // Data Sources - Usar el nombre correcto
   sl.registerLazySingleton<ReportRemoteDataSource>(
     () => ReportRemoteDataSourceImpl(
       firestore: sl(),
@@ -267,9 +272,6 @@ Future<void> _initInspectorFeature() async {
   
   logger.d('✅ Inspector feature registered');
 }
-// ===== ADMIN FEATURE =====
-// Actualización necesaria en lib/di/injection_container.dart
-// para el módulo inspector (agregar estas líneas si faltan)
 
 // ===== ADMIN FEATURE =====
 Future<void> _initAdminFeature() async {
@@ -313,6 +315,7 @@ Future<void> _initAdminFeature() async {
   
   logger.d('✅ Admin feature registered');
 }
+
 // ===== VEHICLES FEATURE =====
 Future<void> _initVehiclesFeature() async {
   logger.d('🚗 Initializing Vehicles feature...');
@@ -346,6 +349,7 @@ Future<void> _initVehiclesFeature() async {
   
   logger.d('✅ Vehicles feature registered');
 }
+
 // ===== DASHBOARD FEATURE =====
 Future<void> _initDashboardFeature() async {
   logger.d('📊 Initializing Dashboard feature...');
@@ -398,6 +402,7 @@ Future<void> _initializeServices() async {
     rethrow;
   }
 }
+
 // ===== VALIDATION =====
 void _validateDependencies() {
   logger.d('🔍 Validating dependencies...');
@@ -412,6 +417,9 @@ void _validateDependencies() {
     'InfractionBloc': _validateService<InfractionBloc>(),
     'VehicleBloc': _validateService<VehicleBloc>(),
     'UserManagementBloc': _validateService<UserManagementBloc>(),
+    'StatisticsBloc': _validateService<StatisticsBloc>(),
+    'ProfileBloc': _validateService<ProfileBloc>(),
+    'ThemeBloc': _validateService<ThemeBloc>(),
     'FirebaseAuth': _validateService<FirebaseAuth>(),
     'FirebaseFirestore': _validateService<FirebaseFirestore>(),
     'FirebaseStorage': _validateService<FirebaseStorage>(),
